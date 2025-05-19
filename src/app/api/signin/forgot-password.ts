@@ -14,7 +14,7 @@ const ForgotPasswordSchema = z.object({
 const {
   GMAIL_USER,
   GMAIL_PASS,
-  APP_URL = 'http://localhost:3000',
+  APP_URL = 'hhttps://plantin-pink.vercel.app/',
 } = process.env;
 
 export async function POST(req: Request) {

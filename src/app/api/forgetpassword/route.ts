@@ -14,7 +14,7 @@ const ForgotPasswordSchema = z.object({
 const GMAIL_USER = process.env.GMAIL_USER;
 const GMAIL_PASS = process.env.GMAIL_PASS;
 const MONGODB_URI = process.env.MONGODB_URI;
-const APP_URL = process.env.APP_URL || 'http://localhost:3000';
+const APP_URL = process.env.APP_URL || 'https://plantin-pink.vercel.app/';
 
 
 export async function POST(req: Request) {

@@ -42,11 +42,11 @@ const problemDisplay: ProblemDisplay = {
 };
 
 const companyCategories = [
-  { name: "PlantIn App", slug: "/problems/pest-id" },
-  { name: "Mushroom ID App", slug: "/problems/disease-id" },
+  { name: "PlantIn App", slug: "/plantinapp" },
+  { name: "Mushroom ID App", slug: "/mushroom-identification" },
   { name: "About Us", slug: "/about-us" },
-  { name: "PlantIn App Review", slug: "/reviews" },
-  { name: "Rating & Reviews", slug: "/rating-reviews" },
+  { name: "PlantIn App Review", slug: "/review" },
+  { name: "Rating & Reviews", slug: "/" },
   { name: "Hero of Ukraine", slug: "/hero-of-ukraine" },
   { name: "FAQ", slug: "/faq" },
   { name: "Contact Us", slug: "/contact-us" },
@@ -216,43 +216,44 @@ export function NavigationHeader() {
             <Link href="/feed" className="px-4 py-2 font-medium text-neutral-800">
               Feed
             </Link>
-            {/* Company Dropdown */}
-            <div className="relative group text-left">
-              <Link
-                href="/about-us"
-                className="px-4 py-2 font-medium text-neutral-800 flex items-center"
-              >
-                Company
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-4 w-4 ml-1"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M19 9l-7 7-7-7"
-                    />
-                </svg>
-              </Link>
-              <div className="absolute left-0 top-full hidden group-hover:block bg-white shadow-lg rounded-md z-10">
-                <ul className="py-1">
-                  {companyCategories.map((item) => (
-                    <li key={item.slug}>
-                      <Link
-                        href={item.slug}
-                        className="block px-4 py-2 text-[0.95rem] hover:bg-gray-100"
-                      >
-                        {item.name}
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </div>
+           {/* Company Dropdown */}
+<div className="relative group text-left">
+  <Link
+    href="/about-us"
+    className="px-4 py-2 font-medium text-neutral-800 flex items-center"
+  >
+    Company
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      className="h-4 w-4 ml-1"
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={2}
+        d="M19 9l-7 7-7-7"
+      />
+    </svg>
+  </Link>
+  <div className="absolute left-0 top-full hidden group-hover:block bg-white shadow-lg rounded-md z-10 w-60">
+    <ul className="py-0">
+      {companyCategories.map((item) => (
+        <li key={item.slug}>
+          <Link
+            href={item.slug}
+            className="block px-4 py-1 text-[0.95rem] hover:bg-gray-100"
+          >
+            {item.name}
+          </Link>
+        </li>
+      ))}
+    </ul>
+  </div>
+</div>
+
             <div className="flex gap-3 items-center ml-auto">
               {status === "authenticated" ? (
                 <>

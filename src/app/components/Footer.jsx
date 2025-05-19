@@ -27,27 +27,47 @@ function Footer() {
 
         
         <div className="space-y-3">
-          <h3 className="font-semibold">Plants Care</h3>
-          <ul className="space-y-1 text-sm">
-            {['Plant Identifier', 'Plant Problems', 'Blog', 'Ask the botanist', 'Weed community'].map(item => (
-              <li key={item}>
-                <a href="#" className="hover:underline">{item}</a>
-              </li>
-            ))}
-          </ul>
-        </div>
+  <h3 className="font-semibold">Plants Care</h3>
+  <ul className="space-y-1 text-sm">
+    {[
+      { label: 'Plant Identifier', path: '/identify' },
+      { label: 'Plant Problems', path: '/problems' },
+      { label: 'Blog', path: '/blog' },
+      { label: 'Ask the botanist', path: '/ask-botanist' },
+      { label: 'Weed community', path: '/weed-community' }
+    ].map(item => (
+      <li key={item.label}>
+        <a href={item.path} className="hover:underline">
+          {item.label}
+        </a>
+      </li>
+    ))}
+  </ul>
+</div>
+
 
         
         <div className="space-y-3">
-          <h3 className="font-semibold">Company</h3>
-          <ul className="space-y-1 text-sm">
-            {['About us', 'PlantIn App review', 'Ratings and reviews', 'Hero of Ukraine', 'FAQ', 'Contact us', 'Subscription'].map(item => (
-              <li key={item}>
-                <a href="#" className="hover:underline">{item}</a>
-              </li>
-            ))}
-          </ul>
-        </div>
+  <h3 className="font-semibold">Company</h3>
+  <ul className="space-y-1 text-sm">
+    {[
+      { label: 'About us', path: '/about-us' },
+      { label: 'PlantIn App review', path: '/plantinapp' },
+      { label: 'Ratings and reviews', path: '/review' },
+      { label: 'Hero of Ukraine', path: '/hero-ukraine' },
+      { label: 'FAQ', path: '/faq' },
+      { label: 'Contact us', path: '/contact-us' },
+      { label: 'Subscription', path: '/subscription' }
+    ].map(item => (
+      <li key={item.label}>
+        <a href={item.path} className="hover:underline">
+          {item.label}
+        </a>
+      </li>
+    ))}
+  </ul>
+</div>
+
 
         
         <div className="space-y-3">
