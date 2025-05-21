@@ -6,8 +6,17 @@
 
 :root {
   --font-poppins: "Poppins", sans-serif;
+  color-scheme: light;
 }
 
 body {
   font-family: var(--font-poppins);
+}
+
+/* Ensure no dark mode styles are applied */
+@media (prefers-color-scheme: dark) {
+  html, body, * {
+    background-color: inherit !important;
+    color: inherit !important;
+  }
 }

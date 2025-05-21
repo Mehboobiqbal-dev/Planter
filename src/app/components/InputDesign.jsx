@@ -1,4 +1,3 @@
-"use client";
 import * as React from "react";
 import { HeroSection } from "./HeroSection";
 import { FeatureSection } from "./FeatureSection";
@@ -8,14 +7,12 @@ import MediaSection from "./MediaSection";
 function InputDesign() {
   return (
     <div className="overflow-x-hidden max-w-[100vw]">
-     
-      <main className="min-h-[330px]">
+      <main className="min-h-[330px] sm:min-h-[400px]">
         <PlantIdentifierSlider />
         <HeroSection />
         <FeatureSection />
         <MediaSection />
       </main>
-      
     </div>
   );
 }

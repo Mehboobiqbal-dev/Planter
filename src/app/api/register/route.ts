@@ -1,111 +1,79 @@
 import { NextRequest, NextResponse } from "next/server";
 import clientPromise from "@/app/lib/mongodb-client";
 import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken";
+import { ObjectId } from "mongodb";
 
-/**
- * @swagger
- * /api/register:
- *   post:
- *     summary: Register a new user
- *     description: Creates a new user account with the provided email, password, and name. The password is hashed before storage, and additional user fields are initialized.
- *     tags:
- *       - Authentication
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - email
- *               - password
- *               - name
- *             properties:
- *               email:
- *                 type: string
- *                 format: email
- *                 description: User's email address
- *                 example: user@example.com
- *               password:
- *                 type: string
- *                 format: password
- *                 description: User's password (minimum 6 characters recommended)
- *                 example: Password123
- *               name:
- *                 type: string
- *                 description: User's full name
- *                 example: John Doe
- *               confirmPassword:
- *                 type: string
- *                 format: password
- *                 description: Password confirmation (not used server-side, validated client-side)
- *                 example: Password123
- *     responses:
- *       201:
- *         description: User registered successfully
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                   description: Indicates successful registration
- *                   example: true
- *                 email:
- *                   type: string
- *                   description: The registered user's email
- *                   example: user@example.com
- *       400:
- *         description: Missing required fields
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 error:
- *                   type: string
- *                   example: Email, password, and name are required
- *       409:
- *         description: User already exists
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 error:
- *                   type: string
- *                   example: User already exists
- *       500:
- *         description: Server error
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 error:
- *                   type: string
- *                   example: Server error
- */
+// Ensure JWT_SECRET is defined
+const JWT_SECRET = process.env.JWT_SECRET;
 
 export async function POST(req: NextRequest) {
   try {
+    // Validate JWT_SECRET
+    if (!JWT_SECRET) {
+      throw new Error("JWT_SECRET is not defined");
+    }
+
     const client = await clientPromise;
     const db = client.db();
     const users = db.collection("users");
 
-    const { email, password, name } = await req.json();
-    if (!email || !password || !name) {
-      return NextResponse.json({ error: "Email, password, and name are required" }, { status: 400 });
+    const { email, password, name, confirmPassword } = await req.json();
+
+    // Validate inputs
+    if (!email || !password || !name || !confirmPassword) {
+      return NextResponse.json(
+        { error: "Email, password, name, and confirm password are required" },
+        { status: 400 }
+      );
     }
 
-    const existingUser = await users.findOne({ email });
+    if (password !== confirmPassword) {
+      return NextResponse.json(
+        { error: "Passwords do not match" },
+        { status: 400 }
+      );
+    }
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return NextResponse.json(
+        { error: "Valid email is required" },
+        { status: 400 }
+      );
+    }
+
+    if (password.length < 6) {
+      return NextResponse.json(
+        { error: "Password must be at least 6 characters long" },
+        { status: 400 }
+      );
+    }
+
+    // Define user document type
+    interface UserDocument {
+      _id: ObjectId;
+      email: string;
+      name: string;
+      password: string;
+      fullName: string;
+      username: string;
+      avatar: string;
+      plantCareReminders: boolean;
+      newArticlesNotifications: boolean;
+      [key: string]: any;
+    }
+
+    const existingUser = await users.findOne<UserDocument>({ email });
     if (existingUser) {
-      return NextResponse.json({ error: "User already exists" }, { status: 409 });
+      return NextResponse.json(
+        { error: "User with this email already exists" },
+        { status: 409 }
+      );
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
-    const newUser = {
+    const newUser: UserDocument = {
+      _id: new ObjectId(),
       email,
       name,
       password: hashedPassword,
@@ -121,10 +89,42 @@ export async function POST(req: NextRequest) {
       throw new Error("Failed to register user");
     }
 
+    // Generate JWT token
+    const token = jwt.sign(
+      { userId: result.insertedId.toString(), email, username: newUser.username },
+      JWT_SECRET,
+      { expiresIn: "1h" }
+    );
+
+    // Prepare user data without sensitive fields
+    const { password: _, ...userWithoutPassword } = newUser;
+
     console.log("User registered successfully:", email);
-    return NextResponse.json({ success: true, email }, { status: 201 });
+    return NextResponse.json(
+      {
+        success: true,
+        user: {
+          userId: result.insertedId.toString(),
+          email,
+          username: newUser.username,
+          name: newUser.name,
+          fullName: newUser.fullName,
+          avatar: newUser.avatar,
+          plantCareReminders: newUser.plantCareReminders,
+          newArticlesNotifications: newUser.newArticlesNotifications,
+        },
+        token,
+      },
+      { status: 201 }
+    );
   } catch (err) {
-    console.error("Error in POST /api/register:", err);
-    return NextResponse.json({ error: "Server error" }, { status: 500 });
+    console.error("Error in POST /api/register:", {
+      message: err instanceof Error ? err.message : "Unknown error",
+      stack: err instanceof Error ? err.stack : undefined,
+    });
+    return NextResponse.json(
+      { error: "Server error", details: err instanceof Error ? err.message : "Unknown error" },
+      { status: 500 }
+    );
   }
 }

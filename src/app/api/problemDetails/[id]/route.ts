@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { MongoClient, ObjectId } from 'mongodb';
+import jwt from 'jsonwebtoken';
 
 interface ProblemDetail {
   _id: string;
@@ -9,22 +10,50 @@ interface ProblemDetail {
   images: string[];
 }
 
-
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const { id } = await params;
-
-  if (!ObjectId.isValid(id)) {
-    console.error(`Invalid ObjectId: ${id}`);
-    return NextResponse.json({ error: 'Invalid problem ID' }, { status: 400 });
+  // 1) Check Authorization header for Bearer token
+  const authHeader = request.headers.get('authorization') || '';
+  if (!authHeader.startsWith('Bearer ')) {
+    return NextResponse.json(
+      { message: 'Unauthorized: Missing or invalid bearer token' },
+      { status: 401 }
+    );
+  }
+  const token = authHeader.substring(7);
+  try {
+    const secret = process.env.JWT_SECRET;
+    if (!secret) {
+      throw new Error('JWT_SECRET is not defined');
+    }
+    jwt.verify(token, secret);
+  } catch (err) {
+    return NextResponse.json(
+      { message: 'Unauthorized: Invalid or expired token' },
+      { status: 401 }
+    );
   }
 
+  // 2) Extract and validate the ID
+  const { id } = await params;
+  if (!ObjectId.isValid(id)) {
+    console.error(`Invalid ObjectId: ${id}`);
+    return NextResponse.json(
+      { error: 'Invalid problem ID' },
+      { status: 400 }
+    );
+  }
+
+  // 3) Connect to MongoDB and fetch the detail
   const uri = process.env.MONGODB_URI;
   if (!uri) {
     console.error('MONGODB_URI is not defined');
-    return NextResponse.json({ error: 'MONGODB_URI is not defined' }, { status: 500 });
+    return NextResponse.json(
+      { error: 'MONGODB_URI is not defined' },
+      { status: 500 }
+    );
   }
 
   const client = new MongoClient(uri);
@@ -39,7 +68,10 @@ export async function GET(
 
     if (!detail) {
       console.error(`No document found for _id: ${id}`);
-      return NextResponse.json({ error: 'Problem detail not found' }, { status: 404 });
+      return NextResponse.json(
+        { error: 'Problem detail not found' },
+        { status: 404 }
+      );
     }
 
     const formatted: ProblemDetail = {
@@ -53,7 +85,10 @@ export async function GET(
     return NextResponse.json(formatted);
   } catch (err) {
     console.error(`Error fetching problem detail for id ${id}:`, err);
-    return NextResponse.json({ error: 'Failed to fetch problem detail' }, { status: 500 });
+    return NextResponse.json(
+      { error: 'Failed to fetch problem detail' },
+      { status: 500 }
+    );
   } finally {
     await client.close();
   }

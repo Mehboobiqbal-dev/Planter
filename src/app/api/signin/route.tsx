@@ -2,93 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { connectToDatabase } from "@/app/lib/mongodb";
 import bcrypt from "bcryptjs";
 import mongoose from "mongoose";
+import jwt from "jsonwebtoken";
 
-/**
- * @swagger
- * /api/signin:
- *   post:
- *     summary: User sign-in
- *     description: Authenticates a user with email and password credentials.
- *     tags:
- *       - Authentication
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - email
- *               - password
- *             properties:
- *               email:
- *                 type: string
- *                 format: email
- *                 description: User's email address
- *                 example: user@example.com
- *               password:
- *                 type: string
- *                 format: password
- *                 description: User's password
- *                 example: Password123
- *     responses:
- *       200:
- *         description: Sign-in successful
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                   example: true
- *                 user:
- *                   type: object
- *                   description: User data excluding password
- *                   properties:
- *                     _id:
- *                       type: string
- *                       description: User ID
- *                       example: 507f1f77bcf86cd799439011
- *                     email:
- *                       type: string
- *                       description: User's email
- *                       example: user@example.com
- *                     name:
- *                       type: string
- *                       description: User's name
- *                       example: John Doe
- *       400:
- *         description: Missing email or password
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 error:
- *                   type: string
- *                   example: Email and password are required
- *       401:
- *         description: Invalid email or password
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 error:
- *                   type: string
- *                   example: Invalid email or password
- *       500:
- *         description: Server error
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 error:
- *                   type: string
- *                   example: Server error
- */
 export async function POST(req: NextRequest) {
   try {
     // Connect to the database
@@ -137,12 +52,29 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Ensure JWT_SECRET is defined
+    const secret = process.env.JWT_SECRET;
+    if (!secret) {
+      throw new Error("JWT_SECRET is not defined");
+    }
+
+    // Generate JWT token
+    const token = jwt.sign(
+      { userId: user._id.toString(), email: user.email },
+      secret,
+      { expiresIn: "1h" }
+    );
+
     // Strip out the password before replying
     const { password: _, ...userWithoutPassword } = user;
 
     console.log("User signed in successfully:", email);
     return NextResponse.json(
-      { success: true, user: userWithoutPassword },
+      {
+        success: true,
+        user: userWithoutPassword,
+        token: token,
+      },
       { status: 200 }
     );
   } catch (err: any) {

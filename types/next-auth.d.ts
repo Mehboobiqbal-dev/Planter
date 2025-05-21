@@ -1,31 +1,22 @@
-// File: types/next-auth.d.ts
-import NextAuth, { DefaultSession, DefaultUser } from 'next-auth';
+import { Session, JWT } from 'next-auth';
 
+// Extend the Session type to include accessToken
 declare module 'next-auth' {
-  /**
-   * Returned by `jwt` callback and stored in the token.
-   */
-  interface JWT {
-    id: string;
-    provider: string;
-  }
-
-  /**
-   * Extended Session type: add `id` and `provider` to `session.user`.
-   */
   interface Session {
+    accessToken?: string;
     user: {
-      /** The user's database ID */
       id: string;
-      /** Which provider they signed in with */
+      email: string;
+      name?: string | null;
       provider: string;
-    } & DefaultSession['user'];
+    };
   }
-}
 
-declare module 'next-auth/jwt' {
   interface JWT {
     id: string;
+    email: string;
+    name?: string | null;
     provider: string;
+    accessToken?: string;
   }
 }

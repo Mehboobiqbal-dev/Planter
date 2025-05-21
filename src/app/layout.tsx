@@ -1,4 +1,3 @@
-
 'use client';
 
 import './globals.css';
@@ -22,12 +21,12 @@ export default function RootLayout({
   return (
     <html lang="en" className={poppins.variable}>
       <body
-        className="min-h-screen flex flex-col bg-white dark:bg-gray-900"
-        suppressHydrationWarning // Add this to suppress the warning
+        className="min-h-screen flex flex-col bg-white text-black"
+        suppressHydrationWarning
       >
         <SessionProvider>
           <NavigationHeader />
-          <main className="flex-grow">{children}</main>
+          <main className="flex-grow bg-white">{children}</main>
           <StickyFooter />
           <Footer />
         </SessionProvider>
@@ -35,4 +34,3 @@ export default function RootLayout({
     </html>
   );
 }
-
