@@ -22,7 +22,7 @@ async function insertProblemCategoryData() {
     {
       name: 'Diseases',
       slug: 'diseases',
-      headerImage: 'https://strapi.myplantin.com/disease_illustration.webp',
+      headerImage: 'https://myplantin.com/_next/image?url=https%3A%2F%2Fstrapi.myplantin.com%2FDiseases_illustration_a772d9dc34.webp&w=3840&q=75',
       title: 'Plant Disease ID Diagnosis',
       description: 'Protect your plants from diseases with our plant disease identifier and in-app diagnostic tool.',
       mainDescription: 'Plant disease identification may be a complicated task for a newbie, so we took our time and figured out how we could help. Choose an identifier and check out this guide. Plant diseases are processes that occur in a plant under the influence of various causes, from pathogens to adverse environmental conditions.',
@@ -32,7 +32,7 @@ async function insertProblemCategoryData() {
     {
       name: 'Pests',
       slug: 'pests',
-      headerImage: 'https://strapi.myplantin.com/pest_illustration.webp',
+      headerImage: 'https://myplantin.com/_next/image?url=https%3A%2F%2Fstrapi.myplantin.com%2FDiseases_illustration_a772d9dc34.webp&w=3840&q=75',
       title: 'Plant Pest ID Diagnosis',
       description: 'Identify and manage plant pests using our pest identifier and in-app diagnostic tool.',
       mainDescription: 'Have you ever looked at your adorable plants asking yourself in terror: “What kind of bug is on my houseplant? What are these brown spots on the plant stem?” In most cases, pests are the culprits. Pests are insects that cause harm to gardens or indoor plants by feeding on sap or leaves. Eradicating pests often appears impossible since bugs can spread in a whirlwind manner. You can recognize them with the plant pests identification tool from PlantIn. Address our expert help to get a prudent answer to all your questions. Go on reading to find out how to control indoor plant pests.</p>',
@@ -41,7 +41,7 @@ async function insertProblemCategoryData() {
     {
       name: 'Weeds',
       slug: 'weeds',
-      headerImage: 'https://strapi.myplantin.com/weed_illustration.webp',
+      headerImage: 'https://myplantin.com/_next/image?url=https%3A%2F%2Fstrapi.myplantin.com%2FDiseases_illustration_a772d9dc34.webp&w=3840&q=75',
       title: 'Plant Weeds ID Diagnosis',
       description: 'Control invasive weeds with our weed identifier and in-app diagnostic tool.',
       mainDescription: 'Weeds compete with your plants for resources, impacting their growth. In the “Weeds” category, these invasive plants can choke out your garden or houseplants. Diagnosing and managing weeds early is key to maintaining a thriving plant environment.',

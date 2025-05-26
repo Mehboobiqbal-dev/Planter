@@ -46,7 +46,7 @@ const PopularArticles = () => {
   };
 
   return (
-    <div className="bg-blue-100 p-6 relative overflow-hidden">
+    <div className="bg-blue-100 p-6 relative overflow-hidden mt-10"> {/* Added mt-10 */}
       <div
         ref={scrollRef}
         className="flex overflow-x-auto scroll-smooth gap-6 snap-x snap-mandatory pb-6 no-scrollbar"
@@ -91,5 +91,4 @@ const PopularArticles = () => {
     </div>
   );
 };
-
 export default PopularArticles;

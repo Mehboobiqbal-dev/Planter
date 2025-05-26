@@ -8,7 +8,6 @@ import { MongoDBAdapter } from '@next-auth/mongodb-adapter';
 import clientPromise from '@/app/lib/mongodb-client';
 import bcrypt from 'bcryptjs';
 import { ObjectId } from 'mongodb';
-import { AdapterUser } from 'next-auth/adapters';
 import jwt from 'jsonwebtoken';
 
 // Define custom user interface
@@ -30,7 +29,7 @@ interface CustomSession extends Session {
   };
 }
 
-// Define custom JWT interface to extend NextAuth's JWT
+// Define custom JWT interface
 interface CustomJWT extends JWT {
   id: string;
   email: string;
@@ -38,6 +37,7 @@ interface CustomJWT extends JWT {
   provider: string;
   accessToken?: string;
   sub: string;
+  expiresAt?: number;
 }
 
 // Define MongoDB user document interface
@@ -115,12 +115,14 @@ export const authOptions: NextAuthOptions = {
         token.email = customUser.email;
         token.name = customUser.name;
         token.provider = customUser.provider;
-        // Generate a JWT token compatible with /api/protected-route
+        token.sub = customUser.id;
+
         const secret = process.env.JWT_SECRET;
         if (!secret) {
+          console.error('JWT_SECRET is not defined');
           throw new Error('JWT_SECRET is not defined');
         }
-        token.accessToken = jwt.sign(
+        const accessToken = jwt.sign(
           {
             id: customUser.id,
             email: customUser.email,
@@ -130,28 +132,46 @@ export const authOptions: NextAuthOptions = {
           secret,
           { expiresIn: '1h' }
         );
+        token.accessToken = accessToken;
+        token.expiresAt = Math.floor(Date.now() / 1000) + 3600;
+        console.log('auth.ts - JWT callback - Generated accessToken:', accessToken);
+      } else if (typeof token.expiresAt === 'number' && token.expiresAt < Math.floor(Date.now() / 1000)) {
+        const secret = process.env.JWT_SECRET;
+        if (!secret) {
+          console.error('JWT_SECRET is not defined');
+          throw new Error('JWT_SECRET is not defined');
+        }
+        if (token.id && token.email && token.provider) {
+          const accessToken = jwt.sign(
+            {
+              id: token.id,
+              email: token.email,
+              name: token.name,
+              provider: token.provider,
+            },
+            secret,
+            { expiresIn: '1h' }
+          );
+          token.accessToken = accessToken;
+          token.expiresAt = Math.floor(Date.now() / 1000) + 3600;
+          console.log('auth.ts - JWT callback - Refreshed accessToken:', accessToken);
+        } else {
+          console.error('JWT refresh failed: Missing required token fields', { token });
+        }
       }
       return token;
     },
     async session({ session, token }) {
       const customToken = token as unknown as CustomJWT;
-      if (customToken.id && customToken.email && customToken.provider) {
-        session.user = {
-          id: customToken.id,
-          email: customToken.email,
-          name: customToken.name,
-          provider: customToken.provider,
-        };
-        session.accessToken = customToken.accessToken;
-      } else {
-        session.user = {
-          id: customToken.sub || '',
-          email: customToken.email || '',
-          name: customToken.name || null,
-          provider: customToken.provider || 'unknown',
-        };
-        session.accessToken = customToken.accessToken || customToken.sub;
-      }
+      console.log('auth.ts - Session callback - token:', customToken);
+      session.user = {
+        id: customToken.id || customToken.sub,
+        email: customToken.email || '',
+        name: customToken.name || null,
+        provider: customToken.provider || 'unknown',
+      };
+      session.accessToken = customToken.accessToken;
+      console.log('auth.ts - Session callback - session.accessToken:', session.accessToken);
       return session as CustomSession;
     },
   },

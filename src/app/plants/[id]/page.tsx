@@ -2,6 +2,10 @@
 
 import React, { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import { useSession } from 'next-auth/react';
+import { useDispatch, useSelector } from 'react-redux';
+import { setAccessToken } from '../../redux/slices/authSlice';
+import { RootState } from '../../redux/store';
 import ClipLoader from 'react-spinners/ClipLoader';
 import ImageLightbox from '../../components/ImageLightbox';
 import PlantCareSection from '../../components/PlantCareSection';
@@ -42,9 +46,14 @@ interface PlantDetail {
 export default function PlantsDetail() {
   const params = useParams();
   const router = useRouter();
+  const { data: session, status } = useSession();
+  const dispatch = useDispatch();
+  const accessToken = useSelector((state: RootState) => state.auth.accessToken);
 
   const id = Array.isArray(params.id) ? params.id[0] : params.id ?? '';
   console.log('PlantsDetail - Params:', params, 'ID:', id);
+  console.log('PlantsDetail - Session:', session, 'Status:', status);
+  console.log('PlantsDetail - accessToken from Redux:', accessToken);
 
   const [allPlants, setAllPlants] = useState<Plant[]>([]);
   const [detail, setDetail] = useState<PlantDetail | null>(null);
@@ -52,6 +61,17 @@ export default function PlantsDetail() {
   const [error, setError] = useState<string | null>(null);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [photoIndex, setPhotoIndex] = useState(0);
+
+  // Update Redux with accessToken when session changes
+  useEffect(() => {
+    if (session?.accessToken) {
+      console.log('PlantsDetail - Setting accessToken in Redux:', session.accessToken);
+      dispatch(setAccessToken(session.accessToken));
+    } else if (status === 'unauthenticated') {
+      console.log('PlantsDetail - No session, clearing accessToken in Redux');
+      dispatch(setAccessToken(null));
+    }
+  }, [session, status, dispatch]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -62,10 +82,40 @@ export default function PlantsDetail() {
         return;
       }
 
+      // Wait for session to load
+      if (status === 'loading') {
+        console.log('PlantsDetail - Session loading, waiting...');
+        return;
+      }
+
+      // Redirect to login if not authenticated
+      if (status === 'unauthenticated') {
+        console.warn('PlantsDetail - No session, redirecting to login');
+        router.push('/api/auth/signin');
+        setLoading(false);
+        return;
+      }
+
+      // Check if session and accessToken exist
+      if (!session?.accessToken) {
+        console.error('PlantsDetail - No session.accessToken, setting error');
+        setError('No authentication token found');
+        setLoading(false);
+        return;
+      }
+
       try {
         setLoading(true);
-        const plantsRes = await fetch('/api/plants');
-        if (!plantsRes.ok) throw new Error('Failed to fetch plants');
+        console.log('PlantsDetail - Fetching plants with token:', session.accessToken);
+        const plantsRes = await fetch('/api/plants', {
+          headers: {
+            Authorization: `Bearer ${session.accessToken}`,
+          },
+        });
+        if (!plantsRes.ok) {
+          const errorData = await plantsRes.json();
+          throw new Error(errorData.message || 'Failed to fetch plants');
+        }
         const plantsData = await plantsRes.json();
         setAllPlants(plantsData.plants);
 
@@ -78,12 +128,19 @@ export default function PlantsDetail() {
         }
 
         if (currentPlant.detailId) {
-          const detailRes = await fetch(`/api/plantDetails/${currentPlant.detailId}`);
+          console.log('PlantsDetail - Fetching plant details for detailId:', currentPlant.detailId);
+          const detailRes = await fetch(`/api/plantDetails/${currentPlant.detailId}`, {
+            headers: {
+              Authorization: `Bearer ${session.accessToken}`, // Use session.accessToken
+            },
+          });
           if (detailRes.ok) {
             const detailData = await detailRes.json();
             setDetail(detailData);
           } else {
-            console.warn(`PlantsDetail - Failed to fetch details for detailId: ${currentPlant.detailId}`);
+            const errorData = await detailRes.json();
+            console.warn(`PlantsDetail - Failed to fetch details for detailId: ${currentPlant.detailId}`, errorData);
+            setError(errorData.message || 'Failed to fetch plant details');
             setDetail(null);
           }
         } else {
@@ -99,9 +156,9 @@ export default function PlantsDetail() {
     };
 
     fetchData();
-  }, [id, router]);
+  }, [id, router, status, session?.accessToken]); // Add session?.accessToken to dependencies
 
-  if (loading) {
+  if (status === 'loading' || loading) {
     return (
       <div className="flex justify-center items-center h-screen">
         <ClipLoader size={60} color="#14B8A6" />
@@ -109,7 +166,24 @@ export default function PlantsDetail() {
     );
   }
 
-  if (error) return <div className="text-red-500 p-4">Error: {error}</div>;
+  if (error) {
+    return (
+      <div className="text-red-500 p-4">
+        Error: {error}
+        {error.includes('Unauthorized') && (
+          <div>
+            <p>Please log in to view this page.</p>
+            <button
+              onClick={() => router.push('/api/auth/signin')}
+              className="mt-2 bg-emerald-400 text-white px-4 py-2 rounded-full hover:bg-emerald-500"
+            >
+              Log In
+            </button>
+          </div>
+        )}
+      </div>
+    );
+  }
 
   const plant = allPlants.find((p) => p._id === id);
 

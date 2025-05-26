@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useSession, signOut } from "next-auth/react";
@@ -8,6 +8,7 @@ import { MdFacebook } from "react-icons/md";
 import { FaInstagramSquare, FaPinterest } from "react-icons/fa";
 import { AiFillTikTok } from "react-icons/ai";
 import { IoLeafOutline, IoBookOutline, IoBugOutline, IoGridOutline } from "react-icons/io5";
+import { Plant } from '../../../types/plant'; // Adjust path as needed
 
 const plantCategories = [
   { name: "Flowers", slug: "flowers" },
@@ -30,7 +31,6 @@ const problemCategories = [
   { name: "Ask the Botanist", slug: "/ask-the-botanist" },
 ];
 
-// Define type for problemDisplay to allow string indexing
 interface ProblemDisplay {
   [key: string]: string;
 }
@@ -61,14 +61,79 @@ const blogCategories = [
   { name: "Weeds", slug: "/blog/weeds" },
 ];
 
+interface Notification {
+  _id: string;
+  message: string;
+  date: string;
+}
+
 export function NavigationHeader() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [isMiniBarOpen, setIsMiniBarOpen] = useState(false);
+  const [isNotificationBarOpen, setIsNotificationBarOpen] = useState(false);
+  const [savedPlants, setSavedPlants] = useState<Plant[]>([]);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
 
   const toggleDropdown = () => {
     setIsDropdownOpen((prev) => !prev);
   };
+
+  const toggleMiniBar = () => {
+    setIsMiniBarOpen((prev) => !prev);
+    setIsNotificationBarOpen(false); // Close notification bar when opening plants bar
+  };
+
+  const toggleNotificationBar = () => {
+    setIsNotificationBarOpen((prev) => !prev);
+    setIsMiniBarOpen(false); // Close plants bar when opening notification bar
+  };
+
+  // Fetch saved plants when the mini-bar is opened
+  useEffect(() => {
+    if (isMiniBarOpen && session?.user?.id) {
+      const fetchSavedPlants = async () => {
+        try {
+          const baseUrl = process.env.NEXT_PUBLIC_VERCEL_URL
+            ? `https://${process.env.NEXT_PUBLIC_VERCEL_URL}`
+            : 'http://localhost:3000';
+          const url = `${baseUrl}/api/plant/saved?userId=${session.user.id}`;
+          
+          const res = await fetch(url, { cache: 'no-store' });
+          if (!res.ok) {
+            throw new Error('Failed to fetch saved plants');
+          }
+          const data = await res.json();
+          setSavedPlants(data.plants || []);
+        } catch (error) {
+          console.error('Error fetching saved plants:', error);
+          setSavedPlants([]);
+        }
+      };
+      fetchSavedPlants();
+    }
+  }, [isMiniBarOpen, session?.user?.id]);
+
+  // Mock fetch for notifications (replace with actual API call)
+  useEffect(() => {
+    if (isNotificationBarOpen && session?.user?.id) {
+      const fetchNotifications = async () => {
+        try {
+          // Mock API call for notifications (replace with actual endpoint)
+          const mockNotifications: Notification[] = [
+            { _id: "1", message: "Your plant needs watering!", date: "2025-05-25" },
+            { _id: "2", message: "New article on plant care available.", date: "2025-05-24" },
+          ];
+          setNotifications(mockNotifications);
+        } catch (error) {
+          console.error('Error fetching notifications:', error);
+          setNotifications([]);
+        }
+      };
+      fetchNotifications();
+    }
+  }, [isNotificationBarOpen, session?.user?.id]);
 
   return (
     <>
@@ -93,20 +158,73 @@ export function NavigationHeader() {
                 </Link>
               </div>
 
-              {/* Mobile Top Navigation (replaces desktop nav on mobile) */}
+              {/* Mobile Top Navigation */}
               <div className="lg:hidden flex items-center gap-4">
-                {status !== "authenticated" && (
+                {status === "authenticated" ? (
+                  <>
+                    <Link
+                      href="/subscription"
+                      className="px-2 py-1 font-semibold rounded-2xl bg-purple-600 text-white text-sm flex items-center gap-1 relative mx-2"
+                    >
+                      <img
+                        src="https://myplantin.com/_next/image?url=https%3A%2F%2Fstrapi.myplantin.com%2Fenvelop_free_82a5a66816.webp&w=96&q=75"
+                        alt="Message Icon"
+                        className="h-4 w-4 object-contain"
+                      />
+                      Premium
+                      <span className="absolute top-0 right-0 bg-blue-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center translate-x-1 -translate-y-1">
+                        1
+                      </span>
+                    </Link>
+                    <button onClick={toggleMiniBar} className="relative">
+                      <img
+                        src="https://myplantin.com/icons/my-plants.svg"
+                        alt="Leaves Icon"
+                        className="h-6 w-6"
+                      />
+                      <span className="absolute top-0 right-0 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center translate-x-1 -translate-y-1">
+                        {savedPlants.length}
+                      </span>
+                    </button>
+                    <button onClick={toggleNotificationBar} className="relative">
+                      <svg
+                        className="h-6 w-6 text-gray-600"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-5-5.917V5a2 2 0 10-4 0v.083A6.002 6.002 0 004 11v3.159c0 .538-.214 1.053-.595 1.436L2 17h5m4 4a3 3 0 01-3-3h6a3 3 0 01-3 3z"
+                        />
+                      </svg>
+                      <span className="absolute top-0 right-0 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center translate-x-1 -translate-y-1">
+                        {notifications.length}
+                      </span>
+                    </button>
+                    <Image
+                      src="https://myplantin.com/_next/image?url=https%3A%2F%2Fstrapi.myplantin.com%2FGroup_36843_5858b46b2c.webp&w=96&q=75"
+                      alt="User Profile"
+                      className="h-8 w-8 rounded-full cursor-pointer"
+                      width={32}
+                      height={32}
+                      onClick={toggleDropdown}
+                    />
+                  </>
+                ) : (
                   <>
                     <IoLeafOutline className="text-teal-600 h-6 w-6" />
                     <Link
                       href="/authmodel"
-                      className="px-4 py-2 font-semibold rounded-2xl bg-teal-600 text-white text-sm"
+                      className="px-3 py-1.5 font-semibold rounded-2xl bg-teal-600 text-white text-sm"
                     >
                       Sign Up Free
                     </Link>
                     <Link
                       href="/authmodel"
-                      className="px-4 py-2 font-medium text-neutral-800 text-sm"
+                      className="px-3 py-1.5 font-medium text-neutral-800 text-sm"
                     >
                       Log In
                     </Link>
@@ -280,7 +398,7 @@ export function NavigationHeader() {
                     {/* Premium Button */}
                     <Link
                       href="/subscription"
-                      className="px-4 py-2 font-semibold rounded-2xl bg-purple-600 text-white items-center gap-2"
+                      className="px-4 py-2 font-semibold rounded-2xl bg-purple-600 text-white flex items-center gap-2 relative"
                     >
                       <img
                         src="https://myplantin.com/_next/image?url=https%3A%2F%2Fstrapi.myplantin.com%2Fenvelop_free_82a5a66816.webp&w=96&q=75"
@@ -288,34 +406,129 @@ export function NavigationHeader() {
                         className="h-5 w-5 object-contain"
                       />
                       Premium
-                    </Link>
-                    {/* Leaves Symbol */}
-                    <Link href="/rewards">
-                      <img
-                        src="https://myplantin.com/icons/my-plants.svg"
-                        alt="Leaves Icon"
-                        className="h-6 w-6"
-                      />
-                    </Link>
-                    {/* Notification Bell */}
-                    <Link href="/notifications" className="relative">
-                      <svg
-                        className="h-6 w-6 text-gray-600"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-5-5.917V5a2 2 0 10-4 0v.083A6.002 6.002 0 004 11v3.159c0 .538-.214 1.053-.595 1.436L2 17h5m4 4a3 3 0 01-3-3h6a3 3 0 01-3 3z"
-                        />
-                      </svg>
-                      <span className="absolute top-0 right-0 bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">
-                        0
+                      <span className="absolute top-0 right-0 bg-blue-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center translate-x-1 -translate-y-1">
+                        1
                       </span>
                     </Link>
+                    {/* Leaves Symbol with Mini-Bar */}
+                    <div className="relative">
+                      <button onClick={toggleMiniBar}>
+                        <img
+                          src="https://myplantin.com/icons/my-plants.svg"
+                          alt="Leaves Icon"
+                          className="h-6 w-6"
+                        />
+                        <span className="absolute top-0 right-0 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center translate-x-1 -translate-y-1">
+                          {savedPlants.length}
+                        </span>
+                      </button>
+                      {isMiniBarOpen && (
+                        <div className="absolute right-0 top-full mt-2 w-80 bg-white shadow-lg rounded-lg border border-gray-200 z-20 max-h-96 overflow-y-auto">
+                          <div className="flex justify-between items-center p-4 border-b">
+                            <h3 className="text-lg font-semibold">My Plants</h3>
+                            <button onClick={toggleMiniBar} className="text-gray-500 hover:text-gray-700">
+                              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                              </svg>
+                            </button>
+                          </div>
+                          <ul className="py-2">
+                            {savedPlants.length > 0 ? (
+                              savedPlants.map((plant) => (
+                                <li key={plant._id} className="flex items-center px-4 py-2 hover:bg-gray-100">
+                                  <img
+                                    src={plant.image}
+                                    alt={plant.name}
+                                    className="h-12 w-12 rounded-md object-cover mr-3"
+                                  />
+                                  <div>
+                                    <h4 className="text-sm font-semibold uppercase">{plant.name}</h4>
+                                    <p className="text-xs text-blue-500">Added to My plants</p>
+                                  </div>
+                                  <svg className="h-5 w-5 text-teal-500 ml-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                  </svg>
+                                </li>
+                              ))
+                            ) : (
+                              <li className="px-4 py-2 text-gray-500 text-sm">
+                                No saved plants found.
+                              </li>
+                            )}
+                          </ul>
+                          <div className="p-4 border-t">
+                            <Link
+                              href="/saved-plants"
+                              className="block w-full text-center px-4 py-2 bg-teal-500 text-white rounded-full font-medium"
+                              onClick={() => setIsMiniBarOpen(false)}
+                            >
+                              View my plants
+                            </Link>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                    {/* Notification Bell with Mini-Bar */}
+                    <div className="relative">
+                      <button onClick={toggleNotificationBar}>
+                        <svg
+                          className="h-6 w-6 text-gray-600"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-5-5.917V5a2 2 0 10-4 0v.083A6.002 6.002 0 004 11v3.159c0 .538-.214 1.053-.595 1.436L2 17h5m4 4a3 3 0 01-3-3h6a3 3 0 01-3 3z"
+                          />
+                        </svg>
+                        <span className="absolute top-0 right-0 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center translate-x-1 -translate-y-1">
+                          {notifications.length}
+                        </span>
+                      </button>
+                      {isNotificationBarOpen && (
+                        <div className="absolute right-0 top-full mt-2 w-80 bg-white shadow-lg rounded-lg border border-gray-200 z-20 max-h-96 overflow-y-auto">
+                          <div className="flex justify-between items-center p-4 border-b">
+                            <h3 className="text-lg font-semibold">Notifications</h3>
+                            <button onClick={toggleNotificationBar} className="text-gray-500 hover:text-gray-700">
+                              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                              </svg>
+                            </button>
+                          </div>
+                          <ul className="py-2">
+                            {notifications.length > 0 ? (
+                              notifications.map((notification) => (
+                                <li key={notification._id} className="flex items-center px-4 py-2 hover:bg-gray-100">
+                                  <div>
+                                    <p className="text-sm font-semibold">{notification.message}</p>
+                                    <p className="text-xs text-gray-500">{notification.date}</p>
+                                  </div>
+                                  <svg className="h-5 w-5 text-teal-500 ml-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                  </svg>
+                                </li>
+                              ))
+                            ) : (
+                              <li className="px-4 py-2 text-gray-500 text-sm">
+                                No recent notifications
+                              </li>
+                            )}
+                          </ul>
+                          <div className="p-4 border-t">
+                            <Link
+                              href="/notifications"
+                              className="block w-full text-center px-4 py-2 bg-teal-500 text-white rounded-full font-medium"
+                              onClick={() => setIsNotificationBarOpen(false)}
+                            >
+                              View all notifications
+                            </Link>
+                          </div>
+                        </div>
+                      )}
+                    </div>
                     {/* Profile Dropdown */}
                     <div className="relative">
                       <Image
@@ -326,61 +539,68 @@ export function NavigationHeader() {
                         height={32}
                         onClick={toggleDropdown}
                       />
-                      <div
-                        className={`absolute right-0 top-full mt-2 w-56 bg-white shadow-lg rounded-lg border border-gray-200 z-20 ${
-                          isDropdownOpen ? "block" : "hidden"
-                        }`}
-                      >
-                        <ul className="py-2 text-gray-700">
-                          {[
-                            { href: "/settings", label: "Settings" },
-                            { href: "/community-profile", label: "Community Profile" },
-                            { href: "/my-plants", label: "My Plants" },
-                            { href: "/saved-articles", label: "Saved Articles" },
-                            { href: "/subscription", label: "Get Premium" },
-                          ].map(({ href, label }) => (
-                            <li key={href} className="px-4 py-2 hover:bg-gray-100">
-                              <Link href={href} onClick={() => setIsDropdownOpen(false)}>
-                                {label}
-                              </Link>
-                            </li>
-                          ))}
-                          <li className="px-4 py-2 hover:bg-gray-100">
-                            <button
-                              onClick={() => {
-                                signOut({ callbackUrl: "/" });
-                                setIsDropdownOpen(false);
-                              }}
-                              className="w-full text-left"
-                            >
-                              Log Out
-                            </button>
-                          </li>
-                        </ul>
-                        {/* Follow Us Section */}
-                        <div className="px-4 py-2 border-t">
-                          <span className="text-sm font-medium">Follow Us:</span>
-                          <div className="flex space-x-3 mt-2">
+                      {isDropdownOpen && (
+                        <div className="absolute right-0 top-full mt-2 w-56 bg-white shadow-lg rounded-lg border border-gray-200 z-20">
+                          <ul className="py-2 text-gray-700">
                             {[
-                              { href: "https://instagram.com", icon: <FaInstagramSquare />, alt: "Instagram" },
-                              { href: "https://facebook.com", icon: <MdFacebook />, alt: "Facebook" },
-                              { href: "https://pinterest.com", icon: <FaPinterest />, alt: "Pinterest" },
-                              { href: "https://tiktok.com", icon: <AiFillTikTok />, alt: "TikTok" },
-                            ].map(({ href, icon, alt }) => (
-                              <Link
-                                key={href}
-                                href={href}
-                                target="_blank"
-                                onClick={() => setIsDropdownOpen(false)}
-                                aria-label={alt}
-                                className="text-2xl text-gray-600 hover:text-black"
-                              >
-                                {icon}
-                              </Link>
+                              { href: "/settings", label: "Settings" },
+                              { href: "/community-profile", label: "Community Profile" },
+                              { href: "/my-plants", label: "My Plants" },
+                              { href: "/saved-articles", label: "Saved Articles" },
+                              { href: "/subscription", label: "Get Premium" },
+                            ].map(({ href, label }) => (
+                              <li key={href} className="px-4 py-2 hover:bg-gray-100">
+                                <button
+                                  className="w-full text-left"
+                                  onClick={async () => {
+                                    if (href === "/settings") {
+                                      console.log("Navigating to:", href);
+                                    }
+                                    await router.push(href);
+                                    setIsDropdownOpen(false);
+                                  }}
+                                >
+                                  {label}
+                                </button>
+                              </li>
                             ))}
+                            <li className="px-4 py-2 hover:bg-gray-100">
+                              <button
+                                onClick={() => {
+                                  signOut({ callbackUrl: "/" });
+                                  setIsDropdownOpen(false);
+                                }}
+                                className="w-full text-left"
+                              >
+                                Log Out
+                              </button>
+                            </li>
+                          </ul>
+                          {/* Follow Us Section */}
+                          <div className="px-4 py-2 border-t">
+                            <span className="text-sm font-medium">Follow Us:</span>
+                            <div className="flex space-x-3 mt-2">
+                              {[
+                                { href: "https://instagram.com", icon: <FaInstagramSquare />, alt: "Instagram" },
+                                { href: "https://facebook.com", icon: <MdFacebook />, alt: "Facebook" },
+                                { href: "https://pinterest.com", icon: <FaPinterest />, alt: "Pinterest" },
+                                { href: "https://tiktok.com", icon: <AiFillTikTok />, alt: "TikTok" },
+                              ].map(({ href, icon, alt }) => (
+                                <Link
+                                  key={href}
+                                  href={href}
+                                  target="_blank"
+                                  onClick={() => setIsDropdownOpen(false)}
+                                  aria-label={alt}
+                                  className="text-2xl text-gray-600 hover:text-black"
+                                >
+                                  {icon}
+                                </Link>
+                              ))}
+                            </div>
                           </div>
                         </div>
-                      </div>
+                      )}
                     </div>
                   </>
                 ) : (

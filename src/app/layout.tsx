@@ -6,6 +6,7 @@ import StickyFooter from './components/StickyFooter';
 import Footer from './components/Footer';
 import { SessionProvider } from 'next-auth/react';
 import { Poppins } from 'next/font/google';
+import ReduxProvider from './redux/providers';
 
 const poppins = Poppins({
   subsets: ['latin'],
@@ -24,12 +25,14 @@ export default function RootLayout({
         className="min-h-screen flex flex-col bg-white text-black"
         suppressHydrationWarning
       >
-        <SessionProvider>
-          <NavigationHeader />
-          <main className="flex-grow bg-white">{children}</main>
-          <StickyFooter />
-          <Footer />
-        </SessionProvider>
+        <ReduxProvider>
+          <SessionProvider>
+            <NavigationHeader />
+            <main className="flex-grow bg-white">{children}</main>
+            <StickyFooter />
+            <Footer />
+          </SessionProvider>
+        </ReduxProvider>
       </body>
     </html>
   );

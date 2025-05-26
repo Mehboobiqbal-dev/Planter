@@ -1,25 +1,45 @@
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
 import { FaApple, FaGoogle, FaFacebookF } from 'react-icons/fa';
 import { IoClose } from 'react-icons/io5';
 import { signIn } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
+import { useDispatch, useSelector } from 'react-redux';
+import {
+  setEmail,
+  setPassword,
+  setConfirmPassword,
+  setName,
+  setForgotEmail,
+  setError,
+  setForgotMessage,
+  setTermsAccepted,
+  setNotificationsAccepted,
+  setIsLoading,
+  setActiveTab,
+  setShowForgotPassword,
+  resetAuthState,
+} from '../redux/slices/authSlice';
+import { RootState } from '../redux/types';
 
 const AuthModal = () => {
-  const [activeTab, setActiveTab] = useState('signin');
-  const [showForgotPassword, setShowForgotPassword] = useState(false);
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [name, setName] = useState('');
-  const [forgotEmail, setForgotEmail] = useState('');
-  const [error, setError] = useState('');
-  const [forgotMessage, setForgotMessage] = useState('');
-  const [termsAccepted, setTermsAccepted] = useState(false);
-  const [notificationsAccepted, setNotificationsAccepted] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const dispatch = useDispatch();
   const router = useRouter();
+  const {
+    email,
+    password,
+    confirmPassword,
+    name,
+    forgotEmail,
+    error,
+    forgotMessage,
+    termsAccepted,
+    notificationsAccepted,
+    isLoading,
+    activeTab,
+    showForgotPassword,
+  } = useSelector((state: RootState) => state.auth);
 
   // Validate email format
   const isValidEmail = (email: string) => {
@@ -30,8 +50,8 @@ const AuthModal = () => {
   // Handle Sign-In
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
-    setIsLoading(true);
+    dispatch(setError(''));
+    dispatch(setIsLoading(true));
 
     try {
       const result = await signIn('credentials', {
@@ -43,13 +63,14 @@ const AuthModal = () => {
       if (result?.error) {
         console.error('Sign-in error:', result.error);
         if (result.error.includes('Invalid email or password')) {
-          setError('Incorrect email or password. Please try again.');
+          dispatch(setError('Incorrect email or password. Please try again.'));
         } else if (result.error.includes('NetworkError')) {
-          setError('Network error: Unable to connect to authentication server.');
+          dispatch(setError('Network error: Unable to connect to authentication server.'));
         } else {
-          setError('Sign-in failed. Please try again later.');
+          dispatch(setError('Sign-in failed. Please try again later.'));
         }
       } else {
+        dispatch(resetAuthState());
         router.push('/');
       }
     } catch (err: unknown) {
@@ -57,29 +78,29 @@ const AuthModal = () => {
         message: err instanceof Error ? err.message : 'Unknown error',
         stack: err instanceof Error ? err.stack : undefined,
       });
-      setError('An unexpected error occurred during sign-in. Please try again.');
+      dispatch(setError('An unexpected error occurred during sign-in. Please try again.'));
     } finally {
-      setIsLoading(false);
+      dispatch(setIsLoading(false));
     }
   };
 
   // Handle Sign-Up
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
-    setIsLoading(true);
+    dispatch(setError(''));
+    dispatch(setIsLoading(true));
 
     if (password !== confirmPassword) {
       console.error('Client-side validation failed: Passwords do not match');
-      setError('Passwords do not match.');
-      setIsLoading(false);
+      dispatch(setError('Passwords do not match.'));
+      dispatch(setIsLoading(false));
       return;
     }
 
     if (!termsAccepted) {
       console.error('Client-side validation failed: Terms not accepted');
-      setError('You must agree to the Privacy Policy, Terms of Service, and Subscription Policy.');
-      setIsLoading(false);
+      dispatch(setError('You must agree to the Privacy Policy, Terms of Service, and Subscription Policy.'));
+      dispatch(setIsLoading(false));
       return;
     }
 
@@ -99,21 +120,21 @@ const AuthModal = () => {
           details: data.details,
         });
         if (data.error.includes('User with this email already exists')) {
-          setError('An account with this email already exists.');
+          dispatch(setError('An account with this email already exists.'));
         } else if (data.error.includes('Valid email is required')) {
-          setError('Please provide a valid email address.');
+          dispatch(setError('Please provide a valid email address.'));
         } else if (data.error.includes('Password is required')) {
-          setError('Password must be at least 6 characters long.');
+          dispatch(setError('Password must be at least 6 characters long.'));
         } else if (data.error.includes('Name is required')) {
-          setError('Please provide a valid name.');
+          dispatch(setError('Please provide a valid name.'));
         } else if (data.error.includes('Request body is required')) {
-          setError('Please fill out all required fields.');
+          dispatch(setError('Please fill out all required fields.'));
         } else if (data.error.includes('Failed to connect to the database')) {
-          setError('Database error: Unable to process sign-up. Please try again later.');
+          dispatch(setError('Database error: Unable to process sign-up. Please try again later.'));
         } else {
-          setError(data.error || 'Failed to sign up. Please try again.');
+          dispatch(setError(data.error || 'Failed to sign up. Please try again.'));
         }
-        setIsLoading(false);
+        dispatch(setIsLoading(false));
         return;
       }
 
@@ -125,8 +146,9 @@ const AuthModal = () => {
 
       if (signInResult?.error) {
         console.error('Auto sign-in after sign-up failed:', signInResult.error);
-        setError('Sign-up successful, but auto sign-in failed. Please sign in manually.');
+        dispatch(setError('Sign-up successful, but auto sign-in failed. Please sign in manually.'));
       } else {
+        dispatch(resetAuthState());
         router.push('/');
       }
     } catch (err: unknown) {
@@ -137,31 +159,31 @@ const AuthModal = () => {
       });
       const errorMessage = err instanceof Error ? err.message : 'Unknown error';
       if (errorMessage.includes('Failed to fetch')) {
-        setError('Network error: Unable to reach the sign-up server.');
+        dispatch(setError('Network error: Unable to reach the sign-up server.'));
       } else {
-        setError('An unexpected error occurred during sign-up. Please try again.');
+        dispatch(setError('An unexpected error occurred during sign-up. Please try again.'));
       }
     } finally {
-      setIsLoading(false);
+      dispatch(setIsLoading(false));
     }
   };
 
   // Handle Forgot Password
   const handleForgotPassword = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
-    setForgotMessage('');
-    setIsLoading(true);
+    dispatch(setError(''));
+    dispatch(setForgotMessage(''));
+    dispatch(setIsLoading(true));
 
     if (!forgotEmail) {
-      setError('Please enter an email address.');
-      setIsLoading(false);
+      dispatch(setError('Please enter an email address.'));
+      dispatch(setIsLoading(false));
       return;
     }
 
     if (!isValidEmail(forgotEmail)) {
-      setError('Please provide a valid email address.');
-      setIsLoading(false);
+      dispatch(setError('Please provide a valid email address.'));
+      dispatch(setIsLoading(false));
       return;
     }
 
@@ -181,11 +203,9 @@ const AuthModal = () => {
         ok: response.ok,
       });
 
-      // Get raw response text for debugging
       const responseText = await response.text();
       console.log('Forgot password raw response:', responseText);
 
-      // Try parsing as JSON
       let data;
       try {
         data = JSON.parse(responseText);
@@ -195,8 +215,8 @@ const AuthModal = () => {
           jsonError: jsonErr instanceof Error ? jsonErr.message : 'Unknown JSON error',
           responseText,
         });
-        setError('Server returned an invalid response. Please try again later.');
-        setIsLoading(false);
+        dispatch(setError('Server returned an invalid response. Please try again later.'));
+        dispatch(setIsLoading(false));
         return;
       }
 
@@ -206,10 +226,10 @@ const AuthModal = () => {
           error: data.error,
           details: data,
         });
-        setError(data.error || `Failed to send reset link (Status: ${response.status}).`);
+        dispatch(setError(data.error || `Failed to send reset link (Status: ${response.status}).`));
       } else {
-        setForgotMessage(data.message);
-        setForgotEmail('');
+        dispatch(setForgotMessage(data.message));
+        dispatch(setForgotEmail(''));
       }
     } catch (err: unknown) {
       console.error('Forgot password fetch error:', {
@@ -218,27 +238,28 @@ const AuthModal = () => {
         stack: err instanceof Error ? err.stack : undefined,
         requestBody,
       });
-      setError('Failed to connect to the server. Please check your network or try again later.');
+      dispatch(setError('Failed to connect to the server. Please check your network or try again later.'));
     } finally {
-      setIsLoading(false);
+      dispatch(setIsLoading(false));
     }
   };
 
   // Handle Social Sign-In
   const handleSocialSignIn = async (provider: string) => {
-    setError('');
-    setIsLoading(true);
+    dispatch(setError(''));
+    dispatch(setIsLoading(true));
 
     try {
       const result = await signIn(provider, { redirect: false });
       if (result?.error) {
         console.error(`Social sign-in error for ${provider}:`, result.error);
         if (result.error.includes('NetworkError')) {
-          setError(`Network error: Unable to connect to ${provider} authentication server.`);
+          dispatch(setError(`Network error: Unable to connect to ${provider} authentication server.`));
         } else {
-          setError(`Failed to sign in with ${provider}. Please try again.`);
+          dispatch(setError(`Failed to sign in with ${provider}. Please try again.`));
         }
       } else {
+        dispatch(resetAuthState());
         router.push('/');
       }
     } catch (err: unknown) {
@@ -246,9 +267,9 @@ const AuthModal = () => {
         message: err instanceof Error ? err.message : 'Unknown error',
         stack: err instanceof Error ? err.stack : undefined,
       });
-      setError(`An unexpected error occurred during ${provider} sign-in. Please try again.`);
+      dispatch(setError(`An unexpected error occurred during ${provider} sign-in. Please try again.`));
     } finally {
-      setIsLoading(false);
+      dispatch(setIsLoading(false));
     }
   };
 
@@ -265,10 +286,7 @@ const AuthModal = () => {
       <div className="w-1/2 flex flex-col justify-center space-y-6 min-h-screen px-12">
         <div className="flex mb-8 border-b-2 border-gray-200">
           <button
-            onClick={() => {
-              setActiveTab('signin');
-              setShowForgotPassword(false);
-            }}
+            onClick={() => dispatch(setActiveTab('signin'))}
             className={`flex-1 text-center py-3 font-semibold transition-colors ${
               activeTab === 'signin' && !showForgotPassword
                 ? 'text-green-500 border-b-4 border-green-500'
@@ -278,10 +296,7 @@ const AuthModal = () => {
             Sign in
           </button>
           <button
-            onClick={() => {
-              setActiveTab('signup');
-              setShowForgotPassword(false);
-            }}
+            onClick={() => dispatch(setActiveTab('signup'))}
             className={`flex-1 text-center py-3 font-semibold transition-colors ${
               activeTab === 'signup' && !showForgotPassword
                 ? 'text-green-500 border-b-4 border-green-500'
@@ -340,7 +355,7 @@ const AuthModal = () => {
                 placeholder="email@email.com"
                 className="w-full px-4 py-3 border rounded-full focus:outline-none focus:ring-2 focus:ring-green-400"
                 value={forgotEmail}
-                onChange={(e) => setForgotEmail(e.target.value.trim())}
+                onChange={(e) => dispatch(setForgotEmail(e.target.value.trim()))}
                 required
                 disabled={isLoading}
               />
@@ -381,7 +396,7 @@ const AuthModal = () => {
             <button
               type="button"
               className="text-sm text-gray-600 hover:underline w-full text-center"
-              onClick={() => setShowForgotPassword(false)}
+              onClick={() => dispatch(setShowForgotPassword(false))}
               disabled={isLoading}
             >
               Back to Sign In
@@ -398,7 +413,7 @@ const AuthModal = () => {
                 placeholder="email@email.com"
                 className="w-full px-4 py-3 border rounded-full focus:outline-none focus:ring-2 focus:ring-green-400"
                 value={email}
-                onChange={(e) => setEmail(e.target.value.trim())}
+                onChange={(e) => dispatch(setEmail(e.target.value.trim()))}
                 required
                 disabled={isLoading}
               />
@@ -411,7 +426,7 @@ const AuthModal = () => {
                 <button
                   type="button"
                   className="text-sm text-gray-600 hover:underline"
-                  onClick={() => setShowForgotPassword(true)}
+                  onClick={() => dispatch(setShowForgotPassword(true))}
                   disabled={isLoading}
                 >
                   Forgot password?
@@ -422,7 +437,7 @@ const AuthModal = () => {
                 placeholder="Password"
                 className="w-full px-4 py-3 border rounded-full focus:outline-none focus:ring-2 focus:ring-green-400"
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={(e) => dispatch(setPassword(e.target.value))}
                 required
                 disabled={isLoading}
               />
@@ -472,7 +487,7 @@ const AuthModal = () => {
                 placeholder="Your name"
                 className="w-full px-4 py-3 border rounded-full focus:outline-none focus:ring-2 focus:ring-green-400"
                 value={name}
-                onChange={(e) => setName(e.target.value.trim())}
+                onChange={(e) => dispatch(setName(e.target.value.trim()))}
                 required
                 disabled={isLoading}
               />
@@ -486,7 +501,7 @@ const AuthModal = () => {
                 placeholder="email@email.com"
                 className="w-full px-4 py-3 border rounded-full focus:outline-none focus:ring-2 focus:ring-green-400"
                 value={email}
-                onChange={(e) => setEmail(e.target.value.trim())}
+                onChange={(e) => dispatch(setEmail(e.target.value.trim()))}
                 required
                 disabled={isLoading}
               />
@@ -501,7 +516,7 @@ const AuthModal = () => {
                   placeholder="Password"
                   className="w-full px-4 py-3 border rounded-full focus:outline-none focus:ring-2 focus:ring-green-400"
                   value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  onChange={(e) => dispatch(setPassword(e.target.value))}
                   required
                   disabled={isLoading}
                 />
@@ -515,7 +530,7 @@ const AuthModal = () => {
                   placeholder="Confirm password"
                   className="w-full px-4 py-3 border rounded-full focus:outline-none focus:ring-2 focus:ring-green-400"
                   value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  onChange={(e) => dispatch(setConfirmPassword(e.target.value))}
                   required
                   disabled={isLoading}
                 />
@@ -525,7 +540,7 @@ const AuthModal = () => {
               <input
                 type="checkbox"
                 checked={termsAccepted}
-                onChange={(e) => setTermsAccepted(e.target.checked)}
+                onChange={(e) => dispatch(setTermsAccepted(e.target.checked))}
                 className="mt-1"
                 disabled={isLoading}
               />
@@ -544,7 +559,7 @@ const AuthModal = () => {
               <input
                 type="checkbox"
                 checked={notificationsAccepted}
-                onChange={(e) => setNotificationsAccepted(e.target.checked)}
+                onChange={(e) => dispatch(setNotificationsAccepted(e.target.checked))}
                 className="mt-1"
                 disabled={isLoading}
               />
