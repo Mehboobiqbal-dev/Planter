@@ -19,18 +19,18 @@ interface RelatedPlantsProps {
 
 const RelatedPlants: React.FC<RelatedPlantsProps> = ({ id, allPlants }) => {
   const router = useRouter();
-  const plants = allPlants
-    .filter(p => p._id !== id)
-    .slice(0, 4);
+  const plants = allPlants.filter(p => p._id !== id).slice(0, 4);
 
   return (
     <section className="mt-10 max-w-7xl mx-auto px-4">
       <h2 className="text-2xl font-bold text-gray-900 mb-6">Related Plants</h2>
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
+
+      {/* Mobile: horizontal scroll; Desktop: grid */}
+      <div className="flex space-x-4 overflow-x-auto sm:grid sm:grid-cols-2 md:grid-cols-4 sm:space-x-0 sm:gap-6">
         {plants.map(plant => (
           <div
             key={plant._id}
-            className="bg-white rounded-lg shadow-md cursor-pointer hover:shadow-lg transition-shadow"
+            className="min-w-[250px] bg-white rounded-lg shadow-md cursor-pointer hover:shadow-lg transition-shadow"
             onClick={() => router.push(`/identify/${plant._id}`)}
           >
             <img
@@ -44,7 +44,9 @@ const RelatedPlants: React.FC<RelatedPlantsProps> = ({ id, allPlants }) => {
             </div>
           </div>
         ))}
-        <div className="flex-none w-64 bg-white rounded-2xl border border-gray-200 shadow-sm p-6 flex flex-col items-center justify-between">
+
+        {/* Discover All Card */}
+        <div className="min-w-[250px] flex-none bg-white rounded-2xl border border-gray-200 shadow-sm p-6 flex flex-col items-center justify-between">
           <img
             src="https://strapi.myplantin.com/twig_e3ab677a36.webp"
             alt="Branch icon"

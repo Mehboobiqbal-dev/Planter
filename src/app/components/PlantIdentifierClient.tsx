@@ -311,7 +311,8 @@ const PlantIdentifierClient: React.FC<PlantIdentifierClientProps> = ({
           </div>
         ) : (
           <>
-            <nav className="sticky top-0 z-50 bg-white shadow-md">
+            {/* Removed sticky class so the category nav scrolls normally */}
+            <nav className="bg-white shadow-md">
               <div className="max-w-7xl mx-auto px-4 py-2 flex items-center justify-between">
                 <ul className="flex space-x-4 py-2 overflow-x-hidden hover:overflow-x-auto no-scrollbar cursor-grab active:cursor-grabbing">
                   {categories.map((cat) => (
@@ -334,8 +335,9 @@ const PlantIdentifierClient: React.FC<PlantIdentifierClientProps> = ({
                     </li>
                   ))}
                 </ul>
+                {/* Show filter button only on mobile (hidden on md and up) */}
                 <button
-                  className="flex items-center justify-center p-2 text-gray-600 hover:text-blue-600"
+                  className="flex items-center justify-center p-2 text-gray-600 hover:text-blue-600 md:hidden"
                   onClick={() => setIsFilterOpen(!isFilterOpen)}
                   title="Filter Options"
                 >
