@@ -1,270 +1,233 @@
 const { MongoClient } = require('mongodb');
+const fs = require('fs'); // Import the file system module
+const path = require('path'); // Import the path module
 
-// Replace with your MongoDB URI
-const uri = process.env.MONGODB_URI || 'mongodb://localhost:27017/plantdb';
+const uri = process.env.MONGODB_URI || 'mongodb+srv://Mehboob090:Mehboob090%40@cluster0.zvqxj.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0';
 const client = new MongoClient(uri);
 
-// Your Begonia JSON data
-const plantData = {
-  id: 49,
-  name: "Begonia",
-  latin: "Begonia",
-  invitation: "Begonia belongs to the genus Begoniaceae, including about 1600 species...",
-  general_information: "Begonia was first described in the 17th century during an expedition to the Antilles...",
-  visible: true,
-  section: null,
-  fun_fact: "Begonia is not only beautiful but also beneficial...",
-  slug: "begonia",
-  common_name: "",
-  container: "For begonias, you should choose an average ceramic pot 3-4 cm larger than the root system...",
-  water: "Begonia loves moisture but does not tolerate waterlogging...",
-  soil: "The soil for the plant can be purchased at the store or prepared by yourself...",
-  fertilizer: "Begonia must be fertilized, especially during the period of growth and flowering...",
-  temperature: "Ideal conditions for Begonias in summer +20-22°C (68-72 Fº)...",
-  cutting: "If the plant has lost its decorative shape, then cut 4-5 cm along the edge of the pot...",
-  propagation: "Begonia can be propagated by seeds or vegetatively...",
-  else: "",
-  rid_off: "",
-  water_count: 2,
-  water_time: "1/week",
-  water_description: "Striking the right balance with watering is the biggest challenge...",
-  cut: 5,
-  cut_description: "Immediately remove any dead leaves, stems, and flowers...",
-  zone_max: null,
-  zone_min: "10b",
-  koppen: null,
-  summer_max: 25,
-  summer_min: 18,
-  winter_max: 25,
-  winter_min: 18,
-  min_temp: 2,
-  light_secondary: "shade",
-  humidity: "normal",
-  commitment: "normal",
-  difficulty: "medium",
-  dormancy: "coldPeriod",
-  poison_type: null,
-  evergreen: true,
-  createdAt: "2022-01-20T14:52:02.000Z",
-  updatedAt: "2022-12-27T14:10:11.084Z",
-  publishedAt: "2022-01-20T14:52:02.000Z",
-  sunlight: "Home-grown Begonia requires constancy...",
-  fertilizer_description: "Applying a liquid houseplant fertilizer according to the package instructions...",
-  fertilizer_count: 3,
-  fertilizer_time: "1/month",
-  cut_time: "1/month",
-  pests: "",
-  diseases: "",
-  botanists_tips: "",
-  faq_ld: null,
-  need_translate: null,
-  need_update_index: null,
-  weed_invasive: false,
-  reproduction: "",
-  impacts: "",
-  habitat: "",
-  identification: "",
-  default_care_tips_category: null,
-  toxin: "Calcium oxalate",
-  origin: null,
-  noxious_weed_areas: null,
-  other_names: null,
-  views: 10,
-  care_guide: null,
-  translated: null,
-  images: [
-    {
-      id: 74960,
-      name: "begonia_plant_with_beautiful_big_yellow_flowers_2022_06_03_16_20_40_utc_min_a433e06182.webp",
-      alternativeText: "Hanging Begonia",
-      caption: "begonia_plant_with_beautiful_big_yellow_flowers_2022_06_03_16_20_40_utc_min_a433e06182.webp",
-      width: 5093,
-      height: 3398,
-      formats: {
-        large: {
-          ext: ".webp",
-          url: "https://strapi.myplantin.com/large_begonia_plant_with_beautiful_big_yellow_flowers_2022_06_03_16_20_40_utc_min_a433e06182.webp",
-          hash: "large_begonia_plant_with_beautiful_big_yellow_flowers_2022_06_03_16_20_40_utc_min_a433e06182",
-          mime: "image/webp",
-          name: "large_begonia_plant_with_beautiful_big_yellow_flowers_2022_06_03_16_20_40_utc_min_a433e06182.webp",
-          path: null,
-          size: 99.26,
-          width: 1000,
-          height: 667,
-          caption: "large_begonia_plant_with_beautiful_big_yellow_flowers_2022_06_03_16_20_40_utc_min_a433e06182.webp",
-          alternative_text: "large_begonia_plant_with_beautiful_big_yellow_flowers_2022_06_03_16_20_40_utc_min_a433e06182.webp"
-        },
-        small: {
-          ext: ".webp",
-          url: "https://strapi.myplantin.com/small_begonia_plant_with_beautiful_big_yellow_flowers_2022_06_03_16_20_40_utc_min_a433e06182.webp",
-          hash: "small_begonia_plant_with_beautiful_big_yellow_flowers_2022_06_03_16_20_40_utc_min_a433e06182",
-          mime: "image/webp",
-          name: "small_begonia_plant_with_beautiful_big_yellow_flowers_2022_06_03_16_20_40_utc_min_a433e06182.webp",
-          path: null,
-          size: 36.44,
-          width: 500,
-          height: 333,
-          caption: "small_begonia_plant_with_beautiful_big_yellow_flowers_2022_06_03_16_20_40_utc_min_a433e06182.webp",
-          alternative_text: "small_begonia_plant_with_beautiful_big_yellow_flowers_2022_06_03_16_20_40_utc_min_a433e06182.webp"
-        },
-        medium: {
-          ext: ".webp",
-          url: "https://strapi.myplantin.com/medium_begonia_plant_with_beautiful_big_yellow_flowers_2022_06_03_16_20_40_utc_min_a433e06182.webp",
-          hash: "medium_begonia_plant_with_beautiful_big_yellow_flowers_2022_06_03_16_20_40_utc_min_a433e06182",
-          mime: "image/webp",
-          name: "medium_begonia_plant_with_beautiful_big_yellow_flowers_2022_06_03_16_20_40_utc_min_a433e06182.webp",
-          path: null,
-          size: 66.01,
-          width: 750,
-          height: 500,
-          caption: "medium_begonia_plant_with_beautiful_big_yellow_flowers_2022_06_03_16_20_40_utc_min_a433e06182.webp",
-          alternative_text: "medium_begonia_plant_with_beautiful_big_yellow_flowers_2022_06_03_16_20_40_utc_min_a433e06182.webp"
-        },
-        thumbnail: {
-          ext: ".webp",
-          url: "https://strapi.myplantin.com/thumbnail_begonia_plant_with_beautiful_big_yellow_flowers_2022_06_03_16_20_40_utc_min_a433e06182.webp",
-          hash: "thumbnail_begonia_plant_with_beautiful_big_yellow_flowers_2022_06_03_16_20_40_utc_min_a433e06182",
-          mime: "image/webp",
-          name: "thumbnail_begonia_plant_with_beautiful_big_yellow_flowers_2022_06_03_16_20_40_utc_min_a433e06182.webp",
-          path: null,
-          size: 11.93,
-          width: 234,
-          height: 156,
-          caption: "thumbnail_begonia_plant_with_beautiful_big_yellow_flowers_2022_06_03_16_20_40_utc_min_a433e06182.webp",
-          alternative_text: "thumbnail_begonia_plant_with_beautiful_big_yellow_flowers_2022_06_03_16_20_40_utc_min_a433e06182.webp"
-        }
-      },
-      hash: "begonia_plant_with_beautiful_big_yellow_flowers_2022_06_03_16_20_40_utc_min_a433e06182",
-      ext: ".webp",
-      mime: "image/webp",
-      size: 654.21,
-      url: "https://strapi.myplantin.com/begonia_plant_with_beautiful_big_yellow_flowers_2022_06_03_16_20_40_utc_min_a433e06182.webp",
-      previewUrl: null,
-      provider: "strapi-provider-upload-s3-cdn",
-      provider_metadata: null,
-      createdAt: "2022-12-27T14:10:08.734Z",
-      updatedAt: "2022-12-27T14:10:08.734Z",
-      folderPath: "/"
-    }
-  ]
-};
+// Load the plant data from your JSON file
+// Make sure 'all_plants_data.json' is in the same directory as this script,
+// or provide the correct path.
+let sourcePlantData = [];
+try {
+  const filePath = path.join(__dirname, 'all_plants_data.json'); // Assumes JSON is in the same directory
+  const jsonData = fs.readFileSync(filePath, 'utf8');
+  sourcePlantData = JSON.parse(jsonData);
+  console.log(`Successfully loaded ${sourcePlantData.length} plants from JSON file.`);
+} catch (error) {
+  console.error('Error loading or parsing plant data JSON file:', error);
+  process.exit(1); // Exit if data can't be loaded
+}
+
 
 async function insertPlants() {
+  if (sourcePlantData.length === 0) {
+    console.log("No plant data loaded. Exiting.");
+    return;
+  }
+
   try {
     await client.connect();
-    const db = client.db('plantdb');
-    const plantsCollection = db.collection('plantsq');
+    console.log("Successfully connected to MongoDB.");
+    const db = client.db('plantdb'); // Your database name
+    const plantsCollection = db.collection('plants');
 
-    // Clear existing data (optional, remove if appending)
-    await plantsCollection.deleteMany({});
+    // Optional: Clear existing data. Use with caution.
+    // console.log("Clearing existing plants collection...");
+    // const deleteResult = await plantsCollection.deleteMany({});
+    // console.log(`Cleared ${deleteResult.deletedCount} existing plants.`);
 
-    // Prepare plant document
-    const plant = {
-      name: plantData.name,
-      latin: plantData.latin,
-      category: plantData.default_care_tips_category || 'indoor', // Default to 'indoor'
-      image: plantData.images[0]?.formats?.medium?.url || plantData.images[0]?.url || 'https://myplantin.com/images/placeholder.jpg', // Use medium format or fallback
-      description: plantData.latin, // Use latin name as short description
-      invitation: plantData.invitation,
-      fullDescription: plantData.general_information,
-      images: plantData.images.map((img) => ({
-        id: img.id,
-        name: img.name,
-        url: img.url,
-        formats: img.formats,
-        caption: img.caption,
-        alternativeText: img.alternativeText,
-        width: img.width,
-        height: img.height,
-      })),
-      care: {
-        water: plantData.water_description || plantData.water,
-        sunlight: plantData.sunlight,
-        soil: plantData.soil,
-        fertilizer: plantData.fertilizer_description || plantData.fertilizer,
-        temperature: plantData.temperature,
-        pruning: plantData.cut_description || plantData.cutting,
-        propagation: plantData.propagation,
-        container: plantData.container,
-        pests: plantData.pests,
-        diseases: plantData.diseases,
-      },
-      careRequirements: [
-        {
-          icon: 'https://myplantin.com/icons/water.svg', // Replace with actual icon URL
-          label: 'Water',
-          value: plantData.water_time || 'Unknown',
-        },
-        {
-          icon: 'https://myplantin.com/icons/sunlight.svg',
-          label: 'Sunlight',
-          value: plantData.light_secondary || 'Indirect',
-        },
-        {
-          icon: 'https://myplantin.com/icons/humidity.svg',
-          label: 'Humidity',
-          value: plantData.humidity || 'Normal',
-        },
-        {
-          icon: 'https://myplantin.com/icons/difficulty.svg',
-          label: 'Difficulty',
-          value: plantData.difficulty || 'Unknown',
-        },
-      ],
-      careSections: [
-        {
-          title: 'Watering',
-          icon: 'https://myplantin.com/icons/water.svg',
-          description: plantData.water_description || plantData.water,
-        },
-        {
-          title: 'Sunlight',
-          icon: 'https://myplantin.com/icons/sunlight.svg',
-          description: plantData.sunlight,
-        },
-        {
-          title: 'Soil',
-          icon: 'https://myplantin.com/icons/soil.svg',
-          description: plantData.soil,
-        },
-        {
-          title: 'Fertilizer',
-          icon: 'https://myplantin.com/icons/fertilizer.svg',
-          description: plantData.fertilizer_description || plantData.fertilizer,
-        },
-        {
-          title: 'Temperature',
-          icon: 'https://myplantin.com/icons/temperature.svg',
-          description: plantData.temperature,
-        },
-        {
-          title: 'Pruning',
-          icon: 'https://myplantin.com/icons/pruning.svg',
-          description: plantData.cut_description || plantData.cutting,
-        },
-        {
-          title: 'Propagation',
-          icon: 'https://myplantin.com/icons/propagation.svg',
-          description: plantData.propagation,
-        },
-      ],
-      funFact: plantData.fun_fact,
-      commonName: plantData.common_name,
-      slug: plantData.slug,
-      toxicity: plantData.toxin,
-      difficulty: plantData.difficulty,
-      humidity: plantData.humidity,
-    };
+    let insertedCount = 0;
+    let skippedCount = 0;
 
-    // Insert into plants collection
-    await plantsCollection.insertOne(plant);
-    console.log(`Inserted plant: ${plantData.name}`);
+    // --------- OPTION 1: Insert one by one (easier to debug, slower for huge datasets) --------
+    console.log(`Starting to insert ${sourcePlantData.length} plants one by one...`);
+    for (const currentPlantData of sourcePlantData) {
+      if (!currentPlantData || !currentPlantData.name) {
+        console.warn('Skipping invalid plant data object:', currentPlantData);
+        skippedCount++;
+        continue;
+      }
+      const plantDocument = {
+        name: currentPlantData.name,
+        latin: currentPlantData.latin,
+        category: 'Houseplant', // Use source category or default
+        image:
+          currentPlantData.images && currentPlantData.images.length > 0 && currentPlantData.images[0].formats?.medium?.url
+            ? currentPlantData.images[0].formats.medium.url
+            : currentPlantData.images && currentPlantData.images.length > 0 && currentPlantData.images[0].url
+            ? currentPlantData.images[0].url
+            : 'https://myplantin.com/images/placeholder.jpg',
+        description: currentPlantData.invitation || currentPlantData.description || currentPlantData.latin,
+        invitation: currentPlantData.invitation,
+        fullDescription: currentPlantData.general_information || currentPlantData.fullDescription,
+        images: Array.isArray(currentPlantData.images)
+          ? currentPlantData.images.map((img) => ({
+              id: img.id, // Consider if this ID is necessary or if MongoDB's _id is sufficient
+              name: img.name,
+              url: img.url,
+              formats: img.formats || {}, // Ensure formats exists
+              caption: img.caption,
+              alternativeText: img.alternativeText,
+              width: img.width,
+              height: img.height,
+            }))
+          : [],
+        care: {
+          water: currentPlantData.water_description || currentPlantData.water,
+          sunlight: currentPlantData.sunlight,
+          soil: currentPlantData.soil,
+          fertilizer: currentPlantData.fertilizer_description || currentPlantData.fertilizer,
+          temperature: currentPlantData.temperature,
+          pruning: currentPlantData.cut_description || currentPlantData.cutting,
+          propagation: currentPlantData.propagation,
+          container: currentPlantData.container,
+          pests: currentPlantData.pests,
+          diseases: currentPlantData.diseases,
+        },
+        careRequirements: [
+          { icon: 'https://strapi.myplantin.com/climate_humidity_3ff8353df1.webp', label: 'Water', value: currentPlantData.water_time || 'Varies' },
+          { icon: 'https://strapi.myplantin.com/climate_lightening_full_sun_da7f3a0b51.webp', label: 'Sunlight', value: currentPlantData.light_secondary || 'Indirect' },
+          { icon: 'https://strapi.myplantin.com/climate_difficulty_66231487c6.webp', label: 'Humidity', value: currentPlantData.humidity || 'Medium' },
+          { icon: 'https://strapi.myplantin.com/climate_difficulty_66231487c6.webp', label: 'Difficulty', value: currentPlantData.difficulty || 'Medium' },
+        ],
+        careSections: [
+          { title: 'Watering', icon: 'https://myplantin.com/_next/image?url=https%3A%2F%2Fstrapi.myplantin.com%2Fplant_care_water_74ea6d9cdc.webp&w=48&q=75', description: currentPlantData.water_description || currentPlantData.water },
+          { title: 'Sunlight', icon: 'https://myplantin.com/_next/image?url=https%3A%2F%2Fstrapi.myplantin.com%2Fplant_care_sunlight_30ed9006a6.webp&w=48&q=75', description: currentPlantData.sunlight },
+          { title: 'Soil', icon: 'https://myplantin.com/_next/image?url=https%3A%2F%2Fstrapi.myplantin.com%2FPlanting_icon_2c3ce2a493.webp&w=48&q=75', description: currentPlantData.soil },
+          { title: 'Fertilizer', icon: 'https://myplantin.com/_next/image?url=https%3A%2F%2Fstrapi.myplantin.com%2Fplant_care_fertilizer_8feecd00c0.webp&w=48&q=75', description: currentPlantData.fertilizer_description || currentPlantData.fertilizer },
+          { title: 'Temperature', icon: 'https://myplantin.com/_next/image?url=https%3A%2F%2Fstrapi.myplantin.com%2Fplant_care_temperature_330abe06c7.webp&w=48&q=75', description: currentPlantData.temperature },
+          { title: 'Pruning', icon: 'https://myplantin.com/_next/image?url=https%3A%2F%2Fstrapi.myplantin.com%2FPlanting_icon_ed780f57c5.webp&w=48&q=75', description: currentPlantData.cut_description || currentPlantData.cutting },
+          { title: 'Propagation', icon: 'https://myplantin.com/icons/propagation.svg', description: currentPlantData.propagation },
+        ].filter(section => section.description), // Only include sections with a description
+        funFact: currentPlantData.fun_fact,
+        commonName: currentPlantData.common_name,
+        slug: currentPlantData.slug || currentPlantData.name?.toLowerCase().replace(/\s+/g, '-'), // Generate slug if missing
+        toxicity: currentPlantData.toxin,
+        difficulty: currentPlantData.difficulty,
+        humidity: currentPlantData.humidity,
+        originalId: currentPlantData.id, // Store original ID if it's useful
+        originalCreatedAt: currentPlantData.createdAt ? new Date(currentPlantData.createdAt) : new Date(),
+        originalUpdatedAt: currentPlantData.updatedAt ? new Date(currentPlantData.updatedAt) : new Date(),
+        originalPublishedAt: currentPlantData.publishedAt ? new Date(currentPlantData.publishedAt) : new Date(),
+      };
 
-    console.log('Plant inserted successfully!');
+      try {
+        await plantsCollection.insertOne(plantDocument);
+        insertedCount++;
+        if (insertedCount % 100 === 0) { // Log progress every 100 inserts
+            console.log(`Inserted ${insertedCount} plants so far...`);
+        }
+      } catch (insertError) {
+        console.error(`Error inserting plant: ${currentPlantData.name} (Original ID: ${currentPlantData.id})`, insertError);
+        // Optionally, you could collect failed inserts to retry later
+      }
+    }
+    console.log('All specified plants processed.');
+
+    // --------- OPTION 2: Insert many in batches (more efficient for very large datasets) --------
+    /*
+    console.log(`Preparing to insert ${sourcePlantData.length} plants in batches...`);
+    const batchSize = 500; // Adjust batch size as needed
+    let documentsToInsert = [];
+    for (const currentPlantData of sourcePlantData) {
+      if (!currentPlantData || !currentPlantData.name) {
+        console.warn('Skipping invalid plant data object:', currentPlantData);
+        skippedCount++;
+        continue;
+      }
+      const plantDocument = {
+        // ... (same plantDocument mapping as above) ...
+        name: currentPlantData.name,
+        latin: currentPlantData.latin,
+        category: currentPlantData.category || 'Houseplant',
+        image:
+          currentPlantData.images && currentPlantData.images.length > 0 && currentPlantData.images[0].formats?.medium?.url
+            ? currentPlantData.images[0].formats.medium.url
+            : currentPlantData.images && currentPlantData.images.length > 0 && currentPlantData.images[0].url
+            ? currentPlantData.images[0].url
+            : 'https://myplantin.com/images/placeholder.jpg',
+        description: currentPlantData.invitation || currentPlantData.description || currentPlantData.latin,
+        invitation: currentPlantData.invitation,
+        fullDescription: currentPlantData.general_information || currentPlantData.fullDescription,
+        images: Array.isArray(currentPlantData.images)
+          ? currentPlantData.images.map((img) => ({
+              id: img.id,
+              name: img.name,
+              url: img.url,
+              formats: img.formats || {},
+              caption: img.caption,
+              alternativeText: img.alternativeText,
+              width: img.width,
+              height: img.height,
+            }))
+          : [],
+        care: {
+          water: currentPlantData.water_description || currentPlantData.water,
+          sunlight: currentPlantData.sunlight,
+          soil: currentPlantData.soil,
+          fertilizer: currentPlantData.fertilizer_description || currentPlantData.fertilizer,
+          temperature: currentPlantData.temperature,
+          pruning: currentPlantData.cut_description || currentPlantData.cutting,
+          propagation: currentPlantData.propagation,
+          container: currentPlantData.container,
+          pests: currentPlantData.pests,
+          diseases: currentPlantData.diseases,
+        },
+        careRequirements: [
+          { icon: 'https://strapi.myplantin.com/climate_humidity_3ff8353df1.webp', label: 'Water', value: currentPlantData.water_time || 'Varies' },
+          { icon: 'https://strapi.myplantin.com/climate_lightening_full_sun_da7f3a0b51.webp', label: 'Sunlight', value: currentPlantData.light_secondary || 'Indirect' },
+          { icon: 'https://strapi.myplantin.com/climate_difficulty_66231487c6.webp', label: 'Humidity', value: currentPlantData.humidity || 'Medium' },
+          { icon: 'https://strapi.myplantin.com/climate_difficulty_66231487c6.webp', label: 'Difficulty', value: currentPlantData.difficulty || 'Medium' },
+        ],
+        careSections: [
+          { title: 'Watering', icon: 'https://myplantin.com/_next/image?url=https%3A%2F%2Fstrapi.myplantin.com%2Fplant_care_water_74ea6d9cdc.webp&w=48&q=75', description: currentPlantData.water_description || currentPlantData.water },
+          { title: 'Sunlight', icon: 'https://myplantin.com/_next/image?url=https%3A%2F%2Fstrapi.myplantin.com%2Fplant_care_sunlight_30ed9006a6.webp&w=48&q=75', description: currentPlantData.sunlight },
+          { title: 'Soil', icon: 'https://myplantin.com/_next/image?url=https%3A%2F%2Fstrapi.myplantin.com%2FPlanting_icon_2c3ce2a493.webp&w=48&q=75', description: currentPlantData.soil },
+          { title: 'Fertilizer', icon: 'https://myplantin.com/_next/image?url=https%3A%2F%2Fstrapi.myplantin.com%2Fplant_care_fertilizer_8feecd00c0.webp&w=48&q=75', description: currentPlantData.fertilizer_description || currentPlantData.fertilizer },
+          { title: 'Temperature', icon: 'https://myplantin.com/_next/image?url=https%3A%2F%2Fstrapi.myplantin.com%2Fplant_care_temperature_330abe06c7.webp&w=48&q=75', description: currentPlantData.temperature },
+          { title: 'Pruning', icon: 'https://myplantin.com/_next/image?url=https%3A%2F%2Fstrapi.myplantin.com%2FPlanting_icon_ed780f57c5.webp&w=48&q=75', description: currentPlantData.cut_description || currentPlantData.cutting },
+          { title: 'Propagation', icon: 'https://myplantin.com/icons/propagation.svg', description: currentPlantData.propagation },
+        ].filter(section => section.description),
+        funFact: currentPlantData.fun_fact,
+        commonName: currentPlantData.common_name,
+        slug: currentPlantData.slug || currentPlantData.name?.toLowerCase().replace(/\s+/g, '-'),
+        toxicity: currentPlantData.toxin,
+        difficulty: currentPlantData.difficulty,
+        humidity: currentPlantData.humidity,
+        originalId: currentPlantData.id,
+        originalCreatedAt: currentPlantData.createdAt ? new Date(currentPlantData.createdAt) : new Date(),
+        originalUpdatedAt: currentPlantData.updatedAt ? new Date(currentPlantData.updatedAt) : new Date(),
+        originalPublishedAt: currentPlantData.publishedAt ? new Date(currentPlantData.publishedAt) : new Date(),
+      };
+      documentsToInsert.push(plantDocument);
+      if (documentsToInsert.length >= batchSize) {
+        const result = await plantsCollection.insertMany(documentsToInsert);
+        insertedCount += result.insertedCount;
+        console.log(`Inserted batch of ${result.insertedCount} plants. Total inserted: ${insertedCount}`);
+        documentsToInsert = []; // Reset for next batch
+      }
+    }
+    // Insert any remaining documents
+    if (documentsToInsert.length > 0) {
+      const result = await plantsCollection.insertMany(documentsToInsert);
+      insertedCount += result.insertedCount;
+      console.log(`Inserted final batch of ${result.insertedCount} plants. Total inserted: ${insertedCount}`);
+    }
+    */
+
+    console.log(`\n--- Summary ---`);
+    console.log(`Successfully inserted ${insertedCount} plants.`);
+    if (skippedCount > 0) {
+        console.log(`Skipped ${skippedCount} invalid plant data objects.`);
+    }
+    console.log('----------------');
+
   } catch (error) {
-    console.error('Error inserting plant:', error);
+    console.error('Error during plant insertion process:', error);
   } finally {
     await client.close();
+    console.log("MongoDB connection closed.");
   }
 }
 

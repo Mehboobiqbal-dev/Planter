@@ -2,7 +2,7 @@
 
 import { Suspense } from 'react';
 import dynamic from 'next/dynamic';
-import { Category, Plant } from '../../../src/types'; // Adjust path to your types
+import { Category, Plant } from '../../../types/plant'; // Adjusted path to use types/plant.ts
 
 // Dynamically import the PlantIdentifierClient component
 const PlantIdentifierClient = dynamic(() => import('./PlantIdentifierClient'), {

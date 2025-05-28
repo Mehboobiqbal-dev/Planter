@@ -1,34 +1,46 @@
-// File: src/app/api/plants/route.ts
-import { NextResponse } from 'next/server';
-import type { NextRequest } from 'next/server';
-import clientPromise from '@/app/lib/mongodb-client';
+import { NextRequest, NextResponse } from 'next/server';
+import { MongoClient } from 'mongodb';
 
 export async function GET(request: NextRequest) {
-  // 1) Fetch “plants” from MongoDB without checking for a Bearer token
+  const uri = process.env.MONGODB_URI;
+  if (!uri) {
+    return NextResponse.json({ error: 'MONGODB_URI is not defined' }, { status: 500 });
+  }
+
+  const client = new MongoClient(uri);
   try {
-    const client = await clientPromise;
-    const db = client.db(process.env.MONGODB_DB || 'plantdb');
-    const plantsCollection = db.collection('plants');
-    const detailsCollection = db.collection('plantDetails');
+    await client.connect();
+    const db = client.db('plantdb');
+    const collection = db.collection('plants');
 
-    const plants = await plantsCollection.find({}).toArray();
-    const details = await detailsCollection.find({}).limit(4).toArray();
-
-    // Map plants to include detailId (first 4 plants get details)
-    const plantsWithDetails = plants.map((plant, index) => ({
-      ...plant,
-      detailId: index < details.length ? details[index]._id : null,
+    const plants = await collection.find({}).toArray();
+    const formattedPlants = plants.map(plant => ({
+      _id: plant._id.toString(),
+      name: plant.name,
+      latin: plant.latin,
+      category: plant.category,
+      image: plant.image,
+      description: plant.description,
+      invitation: plant.invitation,
+      fullDescription: plant.fullDescription,
+      images: plant.images,
+      care: plant.care,
+      careRequirements: plant.careRequirements,
+      careSections: plant.careSections,
+      funFact: plant.funFact,
+      commonName: plant.commonName,
+      slug: plant.slug,
+      toxicity: plant.toxicity,
+      difficulty: plant.difficulty,
+      humidity: plant.humidity,
+      detailId: plant._id.toString(),
     }));
 
-    return NextResponse.json(
-      { plants: plantsWithDetails },
-      { status: 200 }
-    );
-  } catch (error) {
-    console.error('Error fetching plants:', error);
-    return NextResponse.json(
-      { message: 'Failed to fetch plants' },
-      { status: 500 }
-    );
+    return NextResponse.json({ plants: formattedPlants }, { status: 200 });
+  } catch (err) {
+    console.error('Error fetching plants:', err);
+    return NextResponse.json({ error: 'Failed to fetch plants' }, { status: 500 });
+  } finally {
+    await client.close();
   }
 }

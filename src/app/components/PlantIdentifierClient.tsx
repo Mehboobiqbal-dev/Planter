@@ -553,7 +553,7 @@ const PlantIdentifierClient: React.FC<PlantIdentifierClientProps> = ({
                   </div>
                   <h5 className="mt-2 text-left font-medium">{plant.name}</h5>
                   <p className="mt-1 text-left text-sm text-gray-500">
-                    {plant.description}
+                    {plant.latin}
                   </p>
                 </div>
               ))}

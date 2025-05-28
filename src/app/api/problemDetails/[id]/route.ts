@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { MongoClient, ObjectId } from 'mongodb';
-import jwt from 'jsonwebtoken';
 
 interface ProblemDetail {
   _id: string;
@@ -14,29 +13,7 @@ export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  // 1) Check Authorization header for Bearer token
-  const authHeader = request.headers.get('authorization') || '';
-  if (!authHeader.startsWith('Bearer ')) {
-    return NextResponse.json(
-      { message: 'Unauthorized: Missing or invalid bearer token' },
-      { status: 401 }
-    );
-  }
-  const token = authHeader.substring(7);
-  try {
-    const secret = process.env.JWT_SECRET;
-    if (!secret) {
-      throw new Error('JWT_SECRET is not defined');
-    }
-    jwt.verify(token, secret);
-  } catch (err) {
-    return NextResponse.json(
-      { message: 'Unauthorized: Invalid or expired token' },
-      { status: 401 }
-    );
-  }
-
-  // 2) Extract and validate the ID
+  // 1) Extract and validate the ID
   const { id } = await params;
   if (!ObjectId.isValid(id)) {
     console.error(`Invalid ObjectId: ${id}`);
@@ -46,7 +23,7 @@ export async function GET(
     );
   }
 
-  // 3) Connect to MongoDB and fetch the detail
+  // 2) Connect to MongoDB and fetch the detail
   const uri = process.env.MONGODB_URI;
   if (!uri) {
     console.error('MONGODB_URI is not defined');
