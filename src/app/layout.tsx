@@ -8,7 +8,7 @@ import { SessionProvider } from 'next-auth/react';
 import { Poppins } from 'next/font/google';
 import ReduxProvider from './redux/providers';
 import { usePathname } from 'next/navigation'; // ✅ You missed this import
-import React from 'react';
+import React from 'react'; // ✅ React import is good practice
 
 const poppins = Poppins({
   subsets: ['latin'],

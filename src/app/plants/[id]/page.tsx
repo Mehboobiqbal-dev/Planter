@@ -2,16 +2,72 @@
 
 import React, { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import ClipLoader from 'react-spinners/ClipLoader';
+
 import Skeleton from 'react-loading-skeleton';
 import 'react-loading-skeleton/dist/skeleton.css';
 import ImageLightbox from '../../components/ImageLightbox';
 import PlantCareSection from '../../components/PlantCareSection';
 import RelatedPlants from '../../components/RelatedPlants';
 import PopularArticles from '../../components/PopularArticle';
-import { Plant, Image } from '../../../../types/plant'; // Import from types/plant.ts
 
-// Icons
+// Define interfaces (from original code being modified)
+interface ImageFormat {
+  url: string;
+  width: number;
+  height: number;
+}
+
+interface Image {
+  id: number;
+  name: string;
+  url: string;
+  formats: {
+    thumbnail?: ImageFormat;
+    small?: ImageFormat;
+    medium?: ImageFormat;
+    large?: ImageFormat;
+  };
+  caption: string;
+  alternativeText: string;
+  width: number;
+  height: number;
+}
+
+interface CareRequirement {
+  icon: string;
+  label: string;
+  value: string;
+}
+
+interface CareSection {
+  title: string;
+  icon: string;
+  description: string;
+}
+
+interface Plant {
+  _id: string;
+  name: string;
+  latin?: string;
+  category: string;
+  image: string;
+  description: string;
+  invitation?: string;
+  fullDescription?: string;
+  images: Image[];
+  care?: Record<string, string>;
+  careRequirements?: CareRequirement[];
+  careSections?: CareSection[];
+  funFact?: string;
+  commonName?: string;
+  slug?: string;
+  toxicity?: string | null;
+  difficulty?: string;
+  humidity?: string;
+  detailId?: string | null;
+}
+
+// Icons (from original code being modified, HeartIcon explicitly requested)
 const ShareIcon = () => (
   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2.5" stroke="currentColor" className="w-6 h-6 text-gray-500">
     <path strokeLinecap="round" strokeLinejoin="round" d="M16.004 9.414l-2.122 2.121C13.322 12.095 12.726 12.5 12 12.5H4M16.004 9.414L20 13.001M16.004 9.414L12.414 5.828" />
@@ -31,6 +87,7 @@ const HeartIcon = () => (
   </svg>
 );
 
+
 export default function PlantsDetail() {
   const params = useParams();
   const router = useRouter();
@@ -46,12 +103,14 @@ export default function PlantsDetail() {
 
   useEffect(() => {
     const fetchData = async () => {
-      setLoading(true);
-      if (!id) {
+      if (!id) { // If id is an empty string (e.g. from route /plants/ or invalid)
         router.replace('/identify/all-plants');
-        setLoading(false);
+        // No need to set loading/error here as navigation will occur
         return;
       }
+
+      setLoading(true);
+      setError(null); // Reset error from previous fetches
 
       try {
         const detailResponse = await fetch(`/api/plants/${id}`);
@@ -59,67 +118,144 @@ export default function PlantsDetail() {
           if (detailResponse.status === 404) {
             setError('Plant not found. Please check the ID or try another plant.');
           } else {
-            const errorData = await detailResponse.json().catch(() => ({}));
-            throw new Error(errorData.message || `Failed to fetch plant details: ${detailResponse.statusText}`);
+            const errorData = await detailResponse.json().catch(() => ({})); // Try to parse error, fallback to empty object
+            throw new Error(errorData.message || `Failed to fetch plant details: ${detailResponse.status} ${detailResponse.statusText}`);
           }
+          // Do not proceed to setPlant or fetch allPlants if detail fetch failed
+          setPlant(null); // Ensure plant is null if an error occurred
         } else {
           const plantData = await detailResponse.json();
           setPlant(plantData);
         }
 
+        // Only fetch allPlants if the main plant detail fetch was somewhat successful or if needed regardless
+        // For now, assuming it's always fetched as per original logic, but consider if this is always necessary.
         const plantsResponse = await fetch('/api/plants');
         if (!plantsResponse.ok) {
           const errorData = await plantsResponse.json().catch(() => ({}));
-          throw new Error(errorData.message || 'Failed to fetch plants');
+          // Decide if this error should override the plant detail error or append
+          // For simplicity, let's log it and potentially set a generic part of the error state
+          console.error('Failed to fetch all plants list:', errorData.message || plantsResponse.statusText);
+          // Not setting main setError here to preserve specific plant fetch error if any
+          // throw new Error(errorData.message || 'Failed to fetch plants list'); // Or handle differently
+        } else {
+          const { plants } = await plantsResponse.json();
+          setAllPlants(plants);
         }
-        const { plants } = await plantsResponse.json();
-        setAllPlants(plants);
+
       } catch (err: any) {
-        setError(err.message || 'Error loading plant data');
+        // If setError was already called (e.g. for 404), this might override it
+        // Ensure the most relevant error is kept or combined.
+        // The current logic: if 404, setError is called. If another error (e.g. JSON parse, network for allPlants), this catch handles it.
+        if (!error) { // Only set error if not already set by specific handlers (like 404)
+           setError(err.message || 'An unexpected error occurred while loading plant data.');
+        }
         console.error(err);
+        setPlant(null); // Ensure plant is null on error
       } finally {
         setLoading(false);
       }
     };
 
     fetchData();
-  }, [id, router]);
+  }, [id, router]); // `error` is not added as a dependency here to avoid re-triggering fetch on setError.
 
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center h-screen">
-        <ClipLoader size={60} color="#14B8A6" />
-      </div>
-    );
-  }
+  
 
-  if (error || !plant) {
-    return (
-      <div className="flex flex-col justify-center items-center min-h-screen p-4 md:p-6 text-center">
-        <p className="text-red-500 mb-4 text-lg">{error || 'Plant data not available.'}</p>
-        <button
-          onClick={() => router.push('/identify/all-plants')}
-          className="mt-2 bg-emerald-500 text-white px-6 py-3 rounded-full hover:bg-emerald-600 text-base font-semibold"
-        >
-          View All Plants
-        </button>
-      </div>
-    );
-  }
+ if (loading || error || !plant) { // Show skeletons if loading, or if there's an error, or if plant is not yet available
+  return (
+    <div className="flex flex-col min-h-screen p-4 md:p-6">
+      {/* Display error message if an error occurred */}
+      {error && (
+        <div className="max-w-4xl mx-auto w-full mb-6 p-4 bg-red-100 text-red-700 rounded-lg">
+          <p className="font-semibold">Error:</p>
+          <p>{error}</p>
+          <button
+            onClick={() => router.push('/identify/all-plants')}
+            className="mt-3 px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 text-sm font-medium"
+          >
+            Go to All Plants
+          </button>
+        </div>
+      )}
 
+      {/* Show Skeletons if loading is true, or if there's an error (as a fallback UI) or plant still null */}
+      {(loading || (!plant && !error) || (error && !plant) ) && ( // Show skeletons if loading, or if plant is null without an error (initial state), or if error and plant is null
+        <div className="max-w-4xl mx-auto w-full"> {/* Added w-full for proper skeleton width */}
+          {/* Image skeleton */}
+          <Skeleton 
+            height={300} 
+            width="100%" 
+            className="rounded-lg mb-6" 
+            baseColor="#e2e8f0" 
+            highlightColor="#f1f5f9"
+          />
+          
+          {/* Title skeleton */}
+          <Skeleton 
+            height={40} 
+            width="60%" 
+            className="mb-4" 
+            baseColor="#e2e8f0" 
+            highlightColor="#f1f5f9"
+          />
+          
+          {/* Description skeleton */}
+          <Skeleton 
+            count={3} 
+            height={20} 
+            className="mb-2" 
+            baseColor="#e2e8f0" 
+            highlightColor="#f1f5f9"
+          />
+          
+          {/* Care sections or other details */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
+            {Array(4).fill(null).map((_, index) => ( // FIXED: Added null to fill()
+              <Skeleton 
+                key={index} 
+                height={100} 
+                className="rounded-md" 
+                baseColor="#e2e8f0" 
+                highlightColor="#f1f5f9"
+              />
+            ))}
+          </div>
+        </div>
+      )}
+       {/* If there's an error but we still have plant data (e.g. from a previous successful load), 
+           it might be desirable to show the stale data with an error message.
+           The current logic will show error message + skeletons if 'error' is set.
+           If 'plant' data exists AND 'error' is set (e.g. 'allPlants' failed to load),
+           the main content below this block won't render due to the `error` check in the `if` condition.
+           To show stale plant data + error, you'd need:
+           if (loading && !plant) { show skeletons }
+           else if (error && !plant) { show error page }
+           else { // plant data exists, proceed to render, potentially with an error message for partial failures
+             // display main content
+             // if (error) { show partial error message }
+           }
+           For now, the combined condition is kept simple as per original structure, prioritizing error display over stale data if any error occurs.
+        */}
+    </div>
+  );
+}
+
+
+  // If we've passed the block above, plant is guaranteed to be non-null.
   let imagesToDisplay: string[] = [];
   if (plant.images && plant.images.length > 0) {
     imagesToDisplay = plant.images.map(img => img.url);
   } else if (plant.image) {
     imagesToDisplay = [plant.image];
   }
-
+  
   const handleImageClick = (index: number) => {
     setPhotoIndex(index);
     setLightboxOpen(true);
   };
 
-  const scientificName = plant.latin || plant.commonName || plant.description || 'Unknown';
+  const scientificName = plant.latin || plant.commonName || plant.description; 
 
   return (
     <div className="bg-white min-h-screen p-4 md:p-6">
@@ -130,26 +266,28 @@ export default function PlantsDetail() {
             <h1 className="text-2xl md:text-3xl font-bold text-gray-900">
               {plant.name}{plant.name.toLowerCase().includes('care') ? '' : ' Care'}
             </h1>
-            <p className="text-sm text-gray-500 md:italic">{scientificName}</p>
+            <p className="text-sm text-gray-500 md:italic">
+              {scientificName}
+            </p>
           </div>
           <button className="text-gray-600 hover:text-gray-800 md:hidden" aria-label="Share plant details">
-            <ShareIcon />
+             <ShareIcon />
           </button>
           <button
-            onClick={() => router.push(`/care-plan/${id}`)}
+            onClick={() => router.push(`/care-plan/${id}`)} 
             className="hidden md:block bg-emerald-400 text-white px-4 py-2 rounded-full hover:bg-emerald-500"
           >
             Get Care Plan
           </button>
         </div>
         <button
-          onClick={() => router.push(`/care-plan/${id}`)}
+          onClick={() => router.push(`/care-plan/${id}`)} 
           className="mt-1 w-full bg-teal-500 text-white py-3 rounded-[28px] text-base font-semibold md:hidden"
         >
           View Care Plan
         </button>
       </div>
-
+      
       {/* Images + Description Container */}
       <div className="flex flex-col md:flex-row gap-6">
         {/* Images Section */}
@@ -175,7 +313,7 @@ export default function PlantsDetail() {
                       onClick={() => handleImageClick(1)}
                     />
                   )}
-                  {imagesToDisplay[2] && (
+                  {imagesToDisplay[2] && ( 
                     <img
                       src={imagesToDisplay[2]}
                       alt={`${plant.name} 3`}
@@ -188,7 +326,7 @@ export default function PlantsDetail() {
             </div>
 
             <div className="hidden md:grid md:grid-cols-2 md:grid-rows-2 md:gap-4">
-              {imagesToDisplay.slice(0, 4).map((src, idx) => (
+              {imagesToDisplay.slice(0,4).map((src, idx) => (
                 <img
                   key={`desktop-${idx}`}
                   src={src}
@@ -196,17 +334,18 @@ export default function PlantsDetail() {
                   className={`w-full object-cover rounded-lg shadow-md cursor-pointer
                               ${idx === 0 ? 'md:row-span-2 h-full' : 'h-40 md:h-auto'} 
                               ${idx === 0 && imagesToDisplay.length === 1 ? 'md:col-span-2' : ''}
-                              ${idx > 0 ? 'aspect-video md:aspect-auto' : ''}`}
-                  style={idx === 0 ? {} : { aspectRatio: imagesToDisplay.length > 2 && idx === 1 ? '1/1' : undefined }}
+                              ${idx > 0 ? 'aspect-video md:aspect-auto' : ''}
+                            `}
+                  style={idx === 0 ? {} : {aspectRatio: imagesToDisplay.length > 2 && idx === 1 ? '1 / 1' : undefined}} // Refined: '1 / 1'
                   onClick={() => handleImageClick(idx)}
                 />
               ))}
             </div>
           </div>
         ) : (
-          <div className="w-full md:w-1/3 mb-6 md:mb-0">
-            <Skeleton height={330} className="rounded-xl shadow-md" />
-          </div>
+           <div className="w-full md:w-1/3 mb-6 md:mb-0">
+             <Skeleton height={330} className="rounded-xl shadow-md" />
+           </div>
         )}
 
         {/* Text + Care Requirements Section */}
@@ -240,14 +379,18 @@ export default function PlantsDetail() {
             </p>
           </div>
 
-          {plant.careRequirements && plant.careRequirements.length > 0 && (
+          { (plant.careRequirements && plant.careRequirements.length > 0) && (
             <div>
               <h2 className="text-xl md:text-2xl font-semibold text-gray-800 mb-4">Care Requirements</h2>
               <div className="grid grid-cols-2 gap-6 md:grid-cols-3">
                 {plant.careRequirements.map(({ icon, label, value }) => (
                   <div key={label} className="flex items-center">
-                    <img src={icon} alt={`${label} icon`} className="w-12 h-12" />
-                    <div className="ml-2 flex flex-col">
+                    <img
+                      src={icon}
+                      alt={`${label} icon`}
+                      className="w-12 h-12" 
+                    />
+                    <div className="ml-2 flex flex-col"> 
                       <span className="text-gray-700 text-sm">{label}</span>
                       <span className="text-gray-700 text-sm font-medium">{value}</span>
                     </div>
@@ -260,11 +403,12 @@ export default function PlantsDetail() {
       </div>
 
       {/* How to Care Section */}
-      {plant.careSections && plant.careSections.length > 0 && (
+      {(plant.careSections && plant.careSections.length > 0) && (
         <div className="mt-10">
           <h2 className="text-2xl font-bold text-gray-900 mb-6">How to Care for the Plant</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
             <PlantCareSection plant={plant} careSections={plant.careSections} />
+
             <div className="sticky top-24 py-4 px-2 bg-blue-50 rounded-xl">
               <div className="flex items-center space-x-4">
                 <img
@@ -278,7 +422,7 @@ export default function PlantsDetail() {
                 </div>
               </div>
               <button
-                onClick={() => router.push(`/identify/${id}/diagnose`)}
+                onClick={() => router.push(`/identify/${id}/diagnose`)} 
                 className="mt-4 px-5 py-2 border border-emerald-500 text-emerald-500 rounded-full hover:bg-emerald-100"
               >
                 Diagnose my Plant

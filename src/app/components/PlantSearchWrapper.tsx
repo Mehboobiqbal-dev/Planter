@@ -141,7 +141,7 @@ export default function PlantSearchWrapper({
         )}
         {displayedPlants.length > 0 && (
           <div className="mb-4">
-            <h2 className="text-lg font-semibold">Search Results</h2>
+            
             <div className="flex flex-col md:flex-row">
               <PlantIdentifierWrapper
                 key={selectedCategory._id + searchTerm} // Update key to force re-render on search
