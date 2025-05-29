@@ -2,12 +2,11 @@
 
 import { Suspense } from 'react';
 import dynamic from 'next/dynamic';
-import { Category, Plant } from '../../../types/plant'; // Adjusted path to use types/plant.ts
+import { Category, Plant } from '../../../types/plant';
 
 // Dynamically import the PlantIdentifierClient component
 const PlantIdentifierClient = dynamic(() => import('./PlantIdentifierClient'), {
   ssr: false, // Disable server-side rendering for client-only component
-  loading: () => <div className="flex justify-center items-center h-64">Loading Plants...</div>,
 });
 
 interface PlantIdentifierWrapperProps {
@@ -28,7 +27,7 @@ export default function PlantIdentifierWrapper({
   initialExpandedDescription,
 }: PlantIdentifierWrapperProps) {
   return (
-    <Suspense fallback={<div className="flex justify-center items-center h-64">Loading Plants...</div>}>
+    <Suspense fallback={null}>
       <PlantIdentifierClient
         initialSelectedCategory={initialSelectedCategory}
         initialDisplayedPlants={initialDisplayedPlants}

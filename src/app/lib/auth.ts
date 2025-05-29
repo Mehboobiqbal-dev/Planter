@@ -1,4 +1,4 @@
-import NextAuth, { NextAuthOptions, Session, User } from 'next-auth';
+import NextAuth, { NextAuthOptions, Session, User, JWT } from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import GithubProvider from 'next-auth/providers/github';
 import GoogleProvider from 'next-auth/providers/google';
@@ -34,6 +34,16 @@ interface UserDocument {
   name?: string;
   password?: string;
   provider?: string;
+  [key: string]: any;
+}
+
+// Define custom JWT interface compatible with next-auth JWT
+interface CustomJWT extends JWT {
+  id: string;
+  email: string;
+  name?: string | null;
+  provider: string;
+  sub: string;
   [key: string]: any;
 }
 
@@ -103,15 +113,21 @@ export const authOptions: NextAuthOptions = {
         token.name = customUser.name;
         token.provider = customUser.provider;
         token.sub = customUser.id;
+      } else {
+        token.id = token.id || token.sub || 'unknown';
+        token.email = token.email || 'unknown@example.com';
+        token.provider = token.provider || 'unknown';
+        token.sub = token.sub || 'unknown';
       }
       return token;
     },
     async session({ session, token }) {
+      const customToken = token as CustomJWT;
       session.user = {
-        id: token.id || token.sub || '',
-        email: token.email || '',
-        name: token.name || null,
-        provider: token.provider || 'unknown',
+        id: customToken.id,
+        email: customToken.email,
+        name: customToken.name,
+        provider: customToken.provider,
       };
       return session as CustomSession;
     },

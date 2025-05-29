@@ -2,15 +2,7 @@
 
 import React from 'react';
 import { useRouter } from 'next/navigation';
-
-interface Plant {
-  _id: string;
-  name: string;
-  description: string;
-  image: string;
-  category: string;
-  detailId: string | null;
-}
+import { Plant } from '../../../types/plant'; // Import from types/plant.ts
 
 interface RelatedPlantsProps {
   id: string;
@@ -19,7 +11,13 @@ interface RelatedPlantsProps {
 
 const RelatedPlants: React.FC<RelatedPlantsProps> = ({ id, allPlants }) => {
   const router = useRouter();
-  const plants = allPlants.filter(p => p._id !== id).slice(0, 4);
+  const plants = allPlants
+    .filter((p) => p._id !== id)
+    .slice(0, 4)
+    .map((plant) => ({
+      ...plant,
+      latin: plant.latin || 'No description available', // Fallback for rendering
+    }));
 
   return (
     <section className="mt-10 max-w-7xl mx-auto px-4">
@@ -27,7 +25,7 @@ const RelatedPlants: React.FC<RelatedPlantsProps> = ({ id, allPlants }) => {
 
       {/* Mobile: horizontal scroll; Desktop: grid */}
       <div className="flex space-x-4 overflow-x-auto sm:grid sm:grid-cols-2 md:grid-cols-4 sm:space-x-0 sm:gap-6">
-        {plants.map(plant => (
+        {plants.map((plant) => (
           <div
             key={plant._id}
             className="min-w-[250px] bg-white rounded-lg shadow-md cursor-pointer hover:shadow-lg transition-shadow"
@@ -40,7 +38,7 @@ const RelatedPlants: React.FC<RelatedPlantsProps> = ({ id, allPlants }) => {
             />
             <div className="p-4">
               <h3 className="text-lg font-semibold text-gray-800">{plant.name}</h3>
-              <p className="text-sm text-gray-600">{plant.description}</p>
+              <p className="text-sm text-gray-600">{plant.latin}</p>
             </div>
           </div>
         ))}

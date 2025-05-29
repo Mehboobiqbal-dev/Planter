@@ -16,7 +16,7 @@ export default function PlantSearch({ plants }: PlantSearchProps) {
       (plant) =>
         plant.name.toLowerCase().includes(searchTerm) ||
         plant.category.toLowerCase().includes(searchTerm) ||
-        plant.description.toLowerCase().includes(searchTerm)
+        (plant.description?.toLowerCase().includes(searchTerm) ?? false) // Safely handle undefined description
     );
     setFilteredPlants(filtered);
   };
@@ -60,7 +60,9 @@ export default function PlantSearch({ plants }: PlantSearchProps) {
                 {plant.name}
               </h2>
               <p className="mt-1 text-sm text-gray-500">{plant.category}</p>
-              <p className="mt-2 text-gray-700 text-sm">{plant.description}</p>
+              <p className="mt-2 text-gray-700 text-sm">
+                {plant.description || 'No description available'}
+              </p>
             </div>
           ))}
         </div>

@@ -9,65 +9,9 @@ import ImageLightbox from '../../components/ImageLightbox';
 import PlantCareSection from '../../components/PlantCareSection';
 import RelatedPlants from '../../components/RelatedPlants';
 import PopularArticles from '../../components/PopularArticle';
+import { Plant, Image } from '../../../../types/plant'; // Import from types/plant.ts
 
-// Define interfaces (from original code being modified)
-interface ImageFormat {
-  url: string;
-  width: number;
-  height: number;
-}
-
-interface Image {
-  id: number;
-  name: string;
-  url: string;
-  formats: {
-    thumbnail?: ImageFormat;
-    small?: ImageFormat;
-    medium?: ImageFormat;
-    large?: ImageFormat;
-  };
-  caption: string;
-  alternativeText: string;
-  width: number;
-  height: number;
-}
-
-interface CareRequirement {
-  icon: string;
-  label: string;
-  value: string;
-}
-
-interface CareSection {
-  title: string;
-  icon: string;
-  description: string;
-}
-
-interface Plant {
-  _id: string;
-  name: string;
-  latin?: string;
-  category: string;
-  image: string;
-  description: string;
-  invitation?: string;
-  fullDescription?: string;
-  images: Image[];
-  care?: Record<string, string>;
-  careRequirements?: CareRequirement[];
-  careSections?: CareSection[];
-  funFact?: string;
-  commonName?: string;
-  slug?: string;
-  toxicity?: string | null;
-  difficulty?: string;
-  humidity?: string;
-  detailId?: string | null;
-}
-
-// Icons (from original code being modified, HeartIcon explicitly requested)
+// Icons
 const ShareIcon = () => (
   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2.5" stroke="currentColor" className="w-6 h-6 text-gray-500">
     <path strokeLinecap="round" strokeLinejoin="round" d="M16.004 9.414l-2.122 2.121C13.322 12.095 12.726 12.5 12 12.5H4M16.004 9.414L20 13.001M16.004 9.414L12.414 5.828" />
@@ -86,7 +30,6 @@ const HeartIcon = () => (
     <path strokeLinecap="round" strokeLinejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" />
   </svg>
 );
-
 
 export default function PlantsDetail() {
   const params = useParams();
@@ -131,7 +74,6 @@ export default function PlantsDetail() {
         }
         const { plants } = await plantsResponse.json();
         setAllPlants(plants);
-
       } catch (err: any) {
         setError(err.message || 'Error loading plant data');
         console.error(err);
@@ -171,13 +113,13 @@ export default function PlantsDetail() {
   } else if (plant.image) {
     imagesToDisplay = [plant.image];
   }
-  
+
   const handleImageClick = (index: number) => {
     setPhotoIndex(index);
     setLightboxOpen(true);
   };
 
-  const scientificName = plant.latin || plant.commonName || plant.description; // Fallback to description for subtitle consistency
+  const scientificName = plant.latin || plant.commonName || plant.description || 'Unknown';
 
   return (
     <div className="bg-white min-h-screen p-4 md:p-6">
@@ -188,28 +130,26 @@ export default function PlantsDetail() {
             <h1 className="text-2xl md:text-3xl font-bold text-gray-900">
               {plant.name}{plant.name.toLowerCase().includes('care') ? '' : ' Care'}
             </h1>
-            <p className="text-sm text-gray-500 md:italic">
-              {scientificName}
-            </p>
+            <p className="text-sm text-gray-500 md:italic">{scientificName}</p>
           </div>
           <button className="text-gray-600 hover:text-gray-800 md:hidden" aria-label="Share plant details">
-             <ShareIcon />
+            <ShareIcon />
           </button>
           <button
-            onClick={() => router.push(`/care-plan/${id}`)} // Assuming a care plan page exists
+            onClick={() => router.push(`/care-plan/${id}`)}
             className="hidden md:block bg-emerald-400 text-white px-4 py-2 rounded-full hover:bg-emerald-500"
           >
             Get Care Plan
           </button>
         </div>
         <button
-          onClick={() => router.push(`/care-plan/${id}`)} // Assuming a care plan page exists
+          onClick={() => router.push(`/care-plan/${id}`)}
           className="mt-1 w-full bg-teal-500 text-white py-3 rounded-[28px] text-base font-semibold md:hidden"
         >
           View Care Plan
         </button>
       </div>
-      
+
       {/* Images + Description Container */}
       <div className="flex flex-col md:flex-row gap-6">
         {/* Images Section */}
@@ -235,7 +175,7 @@ export default function PlantsDetail() {
                       onClick={() => handleImageClick(1)}
                     />
                   )}
-                  {imagesToDisplay[2] && ( 
+                  {imagesToDisplay[2] && (
                     <img
                       src={imagesToDisplay[2]}
                       alt={`${plant.name} 3`}
@@ -248,7 +188,7 @@ export default function PlantsDetail() {
             </div>
 
             <div className="hidden md:grid md:grid-cols-2 md:grid-rows-2 md:gap-4">
-              {imagesToDisplay.slice(0,4).map((src, idx) => (
+              {imagesToDisplay.slice(0, 4).map((src, idx) => (
                 <img
                   key={`desktop-${idx}`}
                   src={src}
@@ -256,18 +196,17 @@ export default function PlantsDetail() {
                   className={`w-full object-cover rounded-lg shadow-md cursor-pointer
                               ${idx === 0 ? 'md:row-span-2 h-full' : 'h-40 md:h-auto'} 
                               ${idx === 0 && imagesToDisplay.length === 1 ? 'md:col-span-2' : ''}
-                              ${idx > 0 ? 'aspect-video md:aspect-auto' : ''}
-                            `}
-                  style={idx === 0 ? {} : {aspectRatio: imagesToDisplay.length > 2 && idx === 1 ? '1/1' : undefined}}
+                              ${idx > 0 ? 'aspect-video md:aspect-auto' : ''}`}
+                  style={idx === 0 ? {} : { aspectRatio: imagesToDisplay.length > 2 && idx === 1 ? '1/1' : undefined }}
                   onClick={() => handleImageClick(idx)}
                 />
               ))}
             </div>
           </div>
         ) : (
-           <div className="w-full md:w-1/3 mb-6 md:mb-0">
-             <Skeleton height={330} className="rounded-xl shadow-md" />
-           </div>
+          <div className="w-full md:w-1/3 mb-6 md:mb-0">
+            <Skeleton height={330} className="rounded-xl shadow-md" />
+          </div>
         )}
 
         {/* Text + Care Requirements Section */}
@@ -301,18 +240,14 @@ export default function PlantsDetail() {
             </p>
           </div>
 
-          { (plant.careRequirements && plant.careRequirements.length > 0) && (
+          {plant.careRequirements && plant.careRequirements.length > 0 && (
             <div>
               <h2 className="text-xl md:text-2xl font-semibold text-gray-800 mb-4">Care Requirements</h2>
               <div className="grid grid-cols-2 gap-6 md:grid-cols-3">
                 {plant.careRequirements.map(({ icon, label, value }) => (
                   <div key={label} className="flex items-center">
-                    <img
-                      src={icon}
-                      alt={`${label} icon`}
-                      className="w-12 h-12" // Style from target
-                    />
-                    <div className="ml-2 flex flex-col"> {/* Style from target */}
+                    <img src={icon} alt={`${label} icon`} className="w-12 h-12" />
+                    <div className="ml-2 flex flex-col">
                       <span className="text-gray-700 text-sm">{label}</span>
                       <span className="text-gray-700 text-sm font-medium">{value}</span>
                     </div>
@@ -325,12 +260,11 @@ export default function PlantsDetail() {
       </div>
 
       {/* How to Care Section */}
-      {(plant.careSections && plant.careSections.length > 0) && (
+      {plant.careSections && plant.careSections.length > 0 && (
         <div className="mt-10">
           <h2 className="text-2xl font-bold text-gray-900 mb-6">How to Care for the Plant</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
             <PlantCareSection plant={plant} careSections={plant.careSections} />
-
             <div className="sticky top-24 py-4 px-2 bg-blue-50 rounded-xl">
               <div className="flex items-center space-x-4">
                 <img
@@ -344,7 +278,7 @@ export default function PlantsDetail() {
                 </div>
               </div>
               <button
-                onClick={() => router.push(`/identify/${id}/diagnose`)} // Assuming a diagnose page route
+                onClick={() => router.push(`/identify/${id}/diagnose`)}
                 className="mt-4 px-5 py-2 border border-emerald-500 text-emerald-500 rounded-full hover:bg-emerald-100"
               >
                 Diagnose my Plant

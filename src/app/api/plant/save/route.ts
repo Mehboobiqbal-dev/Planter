@@ -14,9 +14,14 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'userId and plantId are required' }, { status: 400 });
     }
 
+    // Validate userId and plantId as strings (no ObjectId conversion)
+    if (typeof userId !== 'string' || typeof plantId !== 'string') {
+      return NextResponse.json({ error: 'Invalid userId or plantId format' }, { status: 400 });
+    }
+
     const uri = process.env.MONGODB_URI;
     if (!uri) {
-      throw new Error('MONGODB_URI is not defined');
+      return NextResponse.json({ error: 'MONGODB_URI is not defined' }, { status: 500 });
     }
 
     const client = new MongoClient(uri);

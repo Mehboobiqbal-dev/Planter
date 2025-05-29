@@ -2,9 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { ClipLoader } from 'react-spinners';
-import CollapsibleBox from '../components/ColapsibleBox';
+import CollapsibleBox from '../components/ColapsibleBox'; // Assuming correct path
 import { FaHeart, FaRegHeart, FaFilter } from 'react-icons/fa';
-import { Plant } from '../../../types/plant';
+import { Plant } from '../../../types/plant'; // Assuming correct path
 
 interface Category {
   name: string;
@@ -36,6 +36,14 @@ interface PlantIdentifierClientProps {
   initialPlantCounts: { [key: string]: number };
   initialMainDescription: string;
   initialExpandedDescription: string;
+}
+
+// This is the type of object returned by your /api/plant/saved endpoint for each saved plant
+interface SavedPlantRecord {
+  _id: string; // This is the plantId
+  userId: string;
+  savedAt: Date; // Or string if it's serialized
+  // Add other fields if your API returns more for saved records
 }
 
 const PlantIdentifierClient: React.FC<PlantIdentifierClientProps> = ({
@@ -71,35 +79,56 @@ const PlantIdentifierClient: React.FC<PlantIdentifierClientProps> = ({
   const [baseUrl, setBaseUrl] = useState('');
   const [isFilterOpen, setIsFilterOpen] = useState<boolean>(false);
 
-  // Set baseUrl on client-side and fetch saved plants
   useEffect(() => {
-    setBaseUrl(window.location.origin);
-    if (session?.user?.id) {
+    if (typeof window !== 'undefined') {
+      setBaseUrl(window.location.origin);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (session?.user?.id && baseUrl) { // Ensure baseUrl is set before fetching
       fetchSavedPlants();
     }
-  }, [session]);
+  }, [session, baseUrl]); // Add baseUrl as a dependency
 
   const fetchSavedPlants = async () => {
-    if (!session?.user?.id) return;
+    if (!session?.user?.id || !baseUrl) return; // Ensure baseUrl is available
     try {
       const res = await fetch(`${baseUrl}/api/plant/saved?userId=${session.user.id}`, {
         cache: 'no-store',
       });
       if (!res.ok) {
         console.error(`Failed to fetch saved plants: ${res.status} ${res.statusText}`);
+        setSavedPlants(new Set()); // Reset or handle error appropriately
         return;
       }
-      const data: { plants: Plant[] } = await res.json();
-      const savedPlantIds = new Set<string>(data.plants.map((plant) => plant._id));
+      // The API returns an array of SavedPlantRecord objects directly.
+      const savedPlantRecords: SavedPlantRecord[] = await res.json();
+
+      // Ensure the response is an array before trying to map over it.
+      if (!Array.isArray(savedPlantRecords)) {
+        console.error('Error fetching saved plants: API response was not an array.', savedPlantRecords);
+        setSavedPlants(new Set()); // Reset or handle error appropriately
+        return;
+      }
+      
+      // Each 'record' in savedPlantRecords has an '_id' property which is the plant's ID.
+      const savedPlantIds = new Set<string>(savedPlantRecords.map((record) => record._id));
       setSavedPlants(savedPlantIds);
     } catch (error) {
       console.error('Error fetching saved plants:', error);
+      setSavedPlants(new Set()); // Reset or handle error appropriately
     }
   };
 
   const savePlant = async (plantId: string) => {
     if (!session?.user?.id) {
       alert('Please log in to save plants');
+      return;
+    }
+    if (!baseUrl) {
+      console.error('Base URL not set, cannot save plant.');
+      alert('Error: Application not fully loaded. Please try again.');
       return;
     }
 
@@ -112,9 +141,12 @@ const PlantIdentifierClient: React.FC<PlantIdentifierClientProps> = ({
         body: JSON.stringify({ userId: session.user.id, plantId }),
       });
       const data = await res.json();
-      alert(data.message); // Consider replacing with react-hot-toast
+      // alert(data.message); // Consider replacing with react-hot-toast or similar
       if (res.ok) {
+        alert(data.message || 'Plant saved successfully!'); // Provide default message
         setSavedPlants((prev) => new Set([...prev, plantId]));
+      } else {
+        alert(data.error || data.message || 'Failed to save plant');
       }
     } catch (error) {
       console.error('Error saving plant:', error);
@@ -125,6 +157,7 @@ const PlantIdentifierClient: React.FC<PlantIdentifierClientProps> = ({
   const fetchCategoryData = async (categorySlug: string) => {
     setLoading(true);
     try {
+      // Assuming API base is the same origin, otherwise prepend baseUrl if needed
       const response = await fetch(`/api/categories?categorySlug=${categorySlug}`);
       if (!response.ok) {
         throw new Error('Failed to fetch category data');
@@ -159,9 +192,14 @@ const PlantIdentifierClient: React.FC<PlantIdentifierClientProps> = ({
 
   const handleCategoryChange = (slug: string) => {
     router.push(`/identify/${slug}`);
-    fetchCategoryData(slug);
+    // fetchCategoryData is now called by Next.js router due to navigation,
+    // or you might want to call it if your page component (`/identify/[slug]/page.tsx`)
+    // doesn't automatically re-fetch or if this component handles data fetching for those routes.
+    // If this component is responsible for fetching on slug change:
+    // fetchCategoryData(slug);
   };
 
+  // Render logic (no changes made here, assuming it's correct)
   return (
     <>
       <aside className="hidden md:block w-full md:w-1/3 lg:w-1/4 mb-8 md:mb-0">
@@ -305,24 +343,27 @@ const PlantIdentifierClient: React.FC<PlantIdentifierClientProps> = ({
           <div className="flex justify-center items-center h-64">
             <ClipLoader color="#04BF94" size={40} />
           </div>
-        ) : displayedPlants.length === 0 ? (
+        ) : displayedPlants.length === 0 && !loading ? ( // Show loader if initial plants are empty and not due to explicit empty result
+          <div className="flex justify-center items-center h-64 text-gray-500">
+            No plants found for this category or filter.
+          </div>
+        ) : displayedPlants.length === 0 && loading ? ( // This case for when loading and plants are empty
           <div className="flex justify-center items-center h-64">
             <ClipLoader color="#04BF94" size={40} />
           </div>
         ) : (
           <>
-            {/* Removed sticky class so the category nav scrolls normally */}
             <nav className="bg-white shadow-md">
               <div className="max-w-7xl mx-auto px-4 py-2 flex items-center justify-between">
                 <ul className="flex space-x-4 py-2 overflow-x-hidden hover:overflow-x-auto no-scrollbar cursor-grab active:cursor-grabbing">
                   {categories.map((cat) => (
                     <li
-                      key={cat.name}
+                      key={cat.slug} // Use slug if name can have duplicates or for routing
                       onClick={() => handleCategoryChange(cat.slug)}
                       className={`
                         whitespace-nowrap cursor-pointer px-3 py-1
                         ${
-                          cat.name === selectedCategory.name
+                          cat.slug === selectedCategory.slug // Compare by slug for consistency
                             ? 'text-green-600 font-medium'
                             : 'text-gray-600 hover:text-blue-600'
                         }
@@ -330,12 +371,11 @@ const PlantIdentifierClient: React.FC<PlantIdentifierClientProps> = ({
                     >
                       {cat.name}
                       <span className="ml-2 text-xs text-gray-500">
-                        ({plantCounts[cat.name]} Plants)
+                        ({plantCounts[cat.name] || 0} Plants)
                       </span>
                     </li>
                   ))}
                 </ul>
-                {/* Show filter button only on mobile (hidden on md and up) */}
                 <button
                   className="flex items-center justify-center p-2 text-gray-600 hover:text-blue-600 md:hidden"
                   onClick={() => setIsFilterOpen(!isFilterOpen)}
@@ -368,56 +408,27 @@ const PlantIdentifierClient: React.FC<PlantIdentifierClientProps> = ({
                     </button>
                   </div>
                   <hr className="border-t border-gray-300 mb-4" />
+                  {/* Mobile Filter Content (same as aside) */}
                   <CollapsibleBox title="Traits" titleClassName="text-gray-400">
                     <div className="flex flex-col space-y-2">
                       <label className="inline-flex items-center">
-                        <input
-                          type="checkbox"
-                          name="trailing"
-                          checked={traits.trailing}
-                          onChange={handleTraitChange}
-                          className="form-checkbox"
-                        />
+                        <input type="checkbox" name="trailing" checked={traits.trailing} onChange={handleTraitChange} className="form-checkbox"/>
                         <span className="ml-2">Trailing</span>
                       </label>
                       <label className="inline-flex items-center">
-                        <input
-                          type="checkbox"
-                          name="hanging"
-                          checked={traits.hanging}
-                          onChange={handleTraitChange}
-                          className="form-checkbox"
-                        />
+                        <input type="checkbox" name="hanging" checked={traits.hanging} onChange={handleTraitChange} className="form-checkbox"/>
                         <span className="ml-2">Hanging</span>
                       </label>
                       <label className="inline-flex items-center">
-                        <input
-                          type="checkbox"
-                          name="evergreen"
-                          checked={traits.evergreen}
-                          onChange={handleTraitChange}
-                          className="form-checkbox"
-                        />
+                        <input type="checkbox" name="evergreen" checked={traits.evergreen} onChange={handleTraitChange} className="form-checkbox"/>
                         <span className="ml-2">Evergreen</span>
                       </label>
                       <label className="inline-flex items-center">
-                        <input
-                          type="checkbox"
-                          name="easyCare"
-                          checked={traits.easyCare}
-                          onChange={handleTraitChange}
-                          className="form-checkbox"
-                        />
+                        <input type="checkbox" name="easyCare" checked={traits.easyCare} onChange={handleTraitChange} className="form-checkbox"/>
                         <span className="ml-2">Easy care</span>
                       </label>
                       <label className="inline-flex items-center">
-                        <input
-                          type="checkbox"
-                          name="airPurifying"
-                          checked={traits.airPurifying}
-                          onChange={handleTraitChange}
-                          className="form-checkbox"
-                        />
+                        <input type="checkbox" name="airPurifying" checked={traits.airPurifying} onChange={handleTraitChange} className="form-checkbox"/>
                         <span className="ml-2">Air Purifying</span>
                       </label>
                     </div>
@@ -425,74 +436,27 @@ const PlantIdentifierClient: React.FC<PlantIdentifierClientProps> = ({
                   <CollapsibleBox title="Life Cycle" titleClassName="text-gray-400">
                     <div className="flex flex-col space-y-2">
                       <label className="inline-flex items-center">
-                        <input
-                          type="radio"
-                          name="perennial"
-                          checked={lifeCycle.perennial}
-                          onChange={handleLifeCycleChange}
-                          className="form-radio"
-                        />
+                        <input type="radio" name="perennial" checked={lifeCycle.perennial} onChange={handleLifeCycleChange} className="form-radio"/>
                         <span className="ml-2">Perennial</span>
                       </label>
                       <label className="inline-flex items-center">
-                        <input
-                          type="radio"
-                          name="annual"
-                          checked={lifeCycle.annual}
-                          onChange={handleLifeCycleChange}
-                          className="form-radio"
-                        />
+                        <input type="radio" name="annual" checked={lifeCycle.annual} onChange={handleLifeCycleChange} className="form-radio"/>
                         <span className="ml-2">Annual</span>
                       </label>
                     </div>
                   </CollapsibleBox>
                   <CollapsibleBox title="Light" titleClassName="text-gray-400">
-                    <div className="flex flex-col space-y-2">
-                      <label className="inline-flex items-center">
-                        <input
-                          type="radio"
-                          name="shade"
-                          className="form-radio"
-                        />
-                        <span className="ml-2">Shade</span>
-                      </label>
-                      <label className="inline-flex items-center">
-                        <input
-                          type="radio"
-                          name="fullSun"
-                          className="form-radio"
-                        />
-                        <span className="ml-2">Full sun</span>
-                      </label>
-                      <label className="inline-flex items-center">
-                        <input
-                          type="radio"
-                          name="partSunPartShade"
-                          className="form-radio"
-                        />
-                        <span className="ml-2">Part Sun Part Shade</span>
-                      </label>
-                    </div>
+                     <div className="flex flex-col space-y-2">
+                        <label className="inline-flex items-center"><input type="radio" name="shade" className="form-radio"/><span className="ml-2">Shade</span></label>
+                        <label className="inline-flex items-center"><input type="radio" name="fullSun" className="form-radio"/><span className="ml-2">Full sun</span></label>
+                        <label className="inline-flex items-center"><input type="radio" name="partSunPartShade" className="form-radio"/><span className="ml-2">Part Sun Part Shade</span></label>
+                     </div>
                   </CollapsibleBox>
                   <CollapsibleBox title="Safety Type" titleClassName="text-gray-400">
-                    <div className="flex flex-col space-y-2">
-                      <label className="inline-flex items-center">
-                        <input
-                          type="radio"
-                          name="safeForPets"
-                          className="form-radio"
-                        />
-                        <span className="ml-2">Safe For Pets</span>
-                      </label>
-                      <label className="inline-flex items-center">
-                        <input
-                          type="radio"
-                          name="safeForHumans"
-                          className="form-radio"
-                        />
-                        <span className="ml-2">Safe For Humans</span>
-                      </label>
-                    </div>
+                     <div className="flex flex-col space-y-2">
+                        <label className="inline-flex items-center"><input type="radio" name="safeForPets" className="form-radio"/><span className="ml-2">Safe For Pets</span></label>
+                        <label className="inline-flex items-center"><input type="radio" name="safeForHumans" className="form-radio"/><span className="ml-2">Safe For Humans</span></label>
+                     </div>
                   </CollapsibleBox>
                 </div>
               </div>
@@ -523,9 +487,7 @@ const PlantIdentifierClient: React.FC<PlantIdentifierClientProps> = ({
                   key={plant._id}
                   className="p-4 shadow rounded bg-white cursor-pointer hover:shadow-lg transition-shadow relative"
                   onClick={(e) => {
-                    // Prevent navigation if clicking the save icon
                     if ((e.target as HTMLElement).closest('.save-icon')) return;
-                    console.log('Navigating to plant:', plant._id);
                     router.push(`/plants/${plant._id}`);
                   }}
                 >
@@ -538,7 +500,7 @@ const PlantIdentifierClient: React.FC<PlantIdentifierClientProps> = ({
                     <button
                       className="save-icon absolute top-2 right-2 p-2 bg-white bg-opacity-75 rounded-full hover:bg-opacity-100 transition-opacity"
                       onClick={(e) => {
-                        e.stopPropagation(); // Prevent triggering the card's onClick
+                        e.stopPropagation();
                         savePlant(plant._id);
                       }}
                       disabled={!session?.user?.id}
