@@ -1,6 +1,6 @@
-// src/app/api/plant-data/route.ts
-import { NextResponse } from "next/server";
-import { MongoClient, ObjectId } from "mongodb"; // ObjectId might not be needed here but good for general use
+import { NextRequest, NextResponse } from 'next/server';
+import { MongoClient } from 'mongodb';
+import jwt from 'jsonwebtoken';
 
 // Interfaces
 interface Category {
@@ -31,28 +31,60 @@ interface ApiPlantDataResponse {
   selectedCategory: Category;
 }
 
-export async function GET(request: Request) {
-  // Removed: JWT verification
+const JWT_SECRET = process.env.JWT_SECRET;
 
-  // Extract categorySlug
+interface TokenPayload {
+  userId: string;
+  email?: string;
+  iat: number;
+  exp: number;
+}
+
+export async function GET(request: NextRequest) {
+  if (!JWT_SECRET) {
+    console.error('JWT_SECRET is not defined in API route');
+    return NextResponse.json({ error: 'Server configuration error.' }, { status: 500 });
+  }
+
+  const authHeader = request.headers.get('Authorization');
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return NextResponse.json({ error: 'Unauthorized: Missing or malformed token.' }, { status: 401 });
+  }
+
+  const token = authHeader.split(' ')[1];
+  let decoded: TokenPayload;
+  try {
+    decoded = jwt.verify(token, JWT_SECRET) as TokenPayload;
+  } catch (err: any) {
+    return NextResponse.json(
+      {
+        error: `Unauthorized: ${err.name === 'TokenExpiredError' ? 'Token expired.' : 'Invalid token.'}`,
+      },
+      { status: 401 }
+    );
+  }
+
+  if (!decoded.userId) {
+    return NextResponse.json({ error: 'Unauthorized: Invalid token payload.' }, { status: 401 });
+  }
+
   const { searchParams } = new URL(request.url);
-  const categorySlug = searchParams.get("categorySlug") || "all-plants";
+  const categorySlug = searchParams.get('categorySlug') || 'all-plants';
 
-  // MongoDB connection
   const uri = process.env.MONGODB_URI;
   if (!uri) {
-    console.error("MONGODB_URI is not defined in API route");
-    return NextResponse.json({ error: "MONGODB_URI is not defined" }, { status: 500 });
+    console.error('MONGODB_URI is not defined in API route');
+    return NextResponse.json({ error: 'MONGODB_URI is not defined' }, { status: 500 });
   }
 
   const client = new MongoClient(uri);
 
   try {
     await client.connect();
-    const database = client.db("plantdb");
+    const database = client.db('plantdb');
 
     // Fetch and format categories
-    const categoryCollection = database.collection<Omit<Category, '_id'>>("categories");
+    const categoryCollection = database.collection<Omit<Category, '_id'>>('categories');
     const categoriesFromDb = await categoryCollection.find({}).toArray();
     const categories: Category[] = categoriesFromDb.map((doc: any) => ({
       _id: doc._id.toString(),
@@ -79,13 +111,13 @@ export async function GET(request: Request) {
     let selectedCategory = categories.find((cat) => cat.slug === categorySlug);
 
     if (!selectedCategory) {
-      if (categorySlug === "all-plants") {
+      if (categorySlug === 'all-plants') {
         selectedCategory = allPlantsCategoryDefault;
-        if (!categories.find(c => c.slug === 'all-plants')) {
+        if (!categories.find((c) => c.slug === 'all-plants')) {
           categories.unshift(allPlantsCategoryDefault);
         }
       } else {
-        selectedCategory = categories.find((cat) => cat.slug === "all-plants") || allPlantsCategoryDefault;
+        selectedCategory = categories.find((cat) => cat.slug === 'all-plants') || allPlantsCategoryDefault;
       }
     }
 
@@ -93,23 +125,25 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: "Category not found and 'all-plants' fallback failed" }, { status: 404 });
     }
 
-    const plantCollection = database.collection<Omit<Plant, '_id'>>("plants");
+    const plantCollection = database.collection<Omit<Plant, '_id'>>('plants');
     let plantsQuery = {};
-    if (selectedCategory.slug !== "all-plants") {
+    if (selectedCategory.slug !== 'all-plants') {
       plantsQuery = { category: selectedCategory.name };
     }
 
-    const plantsFromDb = await plantCollection.find(plantsQuery, {
-      projection: {
-        _id: 1,
-        name: 1,
-        category: 1,
-        image: 1,
-        latin: 1,
-        description: 1,
-        slug: 1,
-      }
-    }).toArray();
+    const plantsFromDb = await plantCollection
+      .find(plantsQuery, {
+        projection: {
+          _id: 1,
+          name: 1,
+          category: 1,
+          image: 1,
+          latin: 1,
+          description: 1,
+          slug: 1,
+        },
+      })
+      .toArray();
 
     const plantsForCategory: Plant[] = plantsFromDb.map((doc: any) => ({
       _id: doc._id.toString(),
@@ -125,7 +159,7 @@ export async function GET(request: Request) {
     const plantCounts: { [key: string]: number } = {};
 
     categories.forEach((cat) => {
-      if (cat.slug === "all-plants") {
+      if (cat.slug === 'all-plants') {
         plantCounts[cat.name] = allPlantsForCounting.length;
       } else {
         plantCounts[cat.name] = allPlantsForCounting.filter((p: any) => p.category === cat.name).length;
@@ -140,10 +174,9 @@ export async function GET(request: Request) {
     };
 
     return NextResponse.json(responseData);
-
   } catch (error) {
-    console.error("Error in API route /api/plant-data:", error);
-    const errorMessage = error instanceof Error ? error.message : "Internal server error";
+    console.error('Error in API route /api/plant-data:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Internal server error';
     return NextResponse.json({ error: errorMessage }, { status: 500 });
   } finally {
     await client.close();

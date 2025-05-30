@@ -1,8 +1,9 @@
-// src/app/identify/[...categorySlug]/page.tsx
 import { headers } from 'next/headers';
 import PlantSearchWrapper from '../../components/PlantSearchWrapper';
+import { getServerSession } from 'next-auth/next';
+import { authOptions, CustomSession } from '../../lib/auth';
 
-// Consistent interfaces (should match API's response structure)
+// Consistent interfaces (matching API's response structure)
 interface Category {
   _id: string;
   name: string;
@@ -35,17 +36,16 @@ interface PlantIdentifierProps {
   params: Promise<{ categorySlug?: string[] }>;
 }
 
-async function getPlantPageData(categorySlug: string): Promise<PlantPageData> {
+async function getPlantPageData(categorySlug: string, token: string): Promise<PlantPageData> {
   const headerList = await headers();
   const host = headerList.get('host');
   const protocol = process.env.NODE_ENV === 'development' ? 'http' : 'https';
   const apiUrl = `${protocol}://${host}/api/plant-data?categorySlug=${categorySlug}`;
 
-  const token = process.env.INTERNAL_API_TOKEN || "your-internal-api-token-if-needed";
-
   const response = await fetch(apiUrl, {
     headers: {
-      'Authorization': `Bearer ${token}`,
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
     },
     cache: 'no-store',
   });
@@ -53,13 +53,17 @@ async function getPlantPageData(categorySlug: string): Promise<PlantPageData> {
   if (!response.ok) {
     const errorBody = await response.text();
     console.error(`API Error (${response.status}) fetching ${apiUrl}: ${errorBody}`);
-    throw new Error(`Failed to fetch plant data from API: ${response.statusText} - ${errorBody}`);
+    if (response.status === 401 || response.status === 403) {
+      throw new Error('Authentication failed. Please log in again.');
+    }
+    throw new Error(`Failed to fetch plant data: ${response.status} - ${errorBody}`);
   }
+
   return response.json();
 }
 
 export default async function PlantIdentifier({ params }: PlantIdentifierProps) {
-  // Resolve the params Promise
+  const session = (await getServerSession(authOptions)) as CustomSession | null;
   const { categorySlug } = await params;
   const slug = categorySlug?.[0] || 'all-plants';
 
@@ -78,10 +82,13 @@ export default async function PlantIdentifier({ params }: PlantIdentifierProps) 
   };
 
   try {
-    pageData = await getPlantPageData(slug);
+    if (!session || !session.apiAccessToken) {
+      throw new Error('You need to be logged in to view plant data.');
+    }
+    pageData = await getPlantPageData(slug, session.apiAccessToken);
   } catch (error) {
-    console.error("Error fetching page data in component:", error);
-    errorFetchingData = error instanceof Error ? error.message : "An unknown error occurred";
+    console.error('Error fetching page data in component:', error);
+    errorFetchingData = error instanceof Error ? error.message : 'An unknown error occurred';
     pageData = {
       plants: [],
       categories: [fallbackCategory],
@@ -90,20 +97,15 @@ export default async function PlantIdentifier({ params }: PlantIdentifierProps) 
     };
   }
 
-  const {
-    plants: displayedPlantsFromAPI,
-    categories,
-    plantCounts,
-    selectedCategory,
-  } = pageData;
+  const { plants: displayedPlantsFromAPI, categories, plantCounts, selectedCategory } = pageData;
 
-  const initialPlants = displayedPlantsFromAPI.map(plant => ({
+  const initialPlants = displayedPlantsFromAPI.map((plant) => ({
     ...plant,
-    description: plant.description || "",
+    description: plant.description || '',
   }));
 
   if (errorFetchingData && !selectedCategory) {
-    console.error("Critical error: No selectedCategory available even after fallback.");
+    console.error('Critical error: No selectedCategory available even after fallback.');
     return <div>Error loading page. Please try refreshing.</div>;
   }
 

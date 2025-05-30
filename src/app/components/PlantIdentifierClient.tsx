@@ -1,10 +1,11 @@
+
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { ClipLoader } from 'react-spinners';
-import CollapsibleBox from '../components/ColapsibleBox'; // Assuming correct path
-import { FaHeart, FaRegHeart, FaFilter } from 'react-icons/fa';
-import { Plant } from '../../../types/plant'; // Assuming correct path
+import CollapsibleBox from '../components/ColapsibleBox';
+import { FaFilter } from 'react-icons/fa';
+import { Plant } from '../../../types/plant';
 
 interface Category {
   name: string;
@@ -38,12 +39,6 @@ interface PlantIdentifierClientProps {
   initialExpandedDescription: string;
 }
 
-interface SavedPlantRecord {
-  _id: string; // This is the plantId
-  userId: string;
-  savedAt: Date; // Or string if serialized
-}
-
 const PlantIdentifierClient: React.FC<PlantIdentifierClientProps> = ({
   initialSelectedCategory,
   initialDisplayedPlants,
@@ -73,7 +68,6 @@ const PlantIdentifierClient: React.FC<PlantIdentifierClientProps> = ({
     annual: false,
   });
   const [loading, setLoading] = useState<boolean>(false);
-  const [savedPlants, setSavedPlants] = useState<Set<string>>(new Set());
   const [baseUrl, setBaseUrl] = useState('');
   const [isFilterOpen, setIsFilterOpen] = useState<boolean>(false);
 
@@ -82,73 +76,6 @@ const PlantIdentifierClient: React.FC<PlantIdentifierClientProps> = ({
       setBaseUrl(window.location.origin);
     }
   }, []);
-
-  useEffect(() => {
-    if (session?.user?.id && baseUrl) {
-      fetchSavedPlants();
-    }
-  }, [session, baseUrl]);
-
-  const fetchSavedPlants = async () => {
-    if (!session?.user?.id || !baseUrl) return;
-    try {
-      const res = await fetch(`${baseUrl}/api/plant/saved?userId=${session.user.id}`, {
-        cache: 'no-store',
-      });
-      if (!res.ok) {
-        console.error(`Failed to fetch saved plants: ${res.status} ${res.statusText}`);
-        setSavedPlants(new Set());
-        return;
-      }
-      const data = await res.json();
-
-      // Check if response has the expected 'plants' array
-      if (!data.plants || !Array.isArray(data.plants)) {
-        console.error('Error fetching saved plants: API response does not contain a plants array.', data);
-        setSavedPlants(new Set());
-        return;
-      }
-
-      // Extract plant IDs from the plants array
-      const savedPlantIds = new Set<string>(data.plants.map((plant: Plant) => plant._id));
-      setSavedPlants(savedPlantIds);
-    } catch (error) {
-      console.error('Error fetching saved plants:', error);
-      setSavedPlants(new Set());
-    }
-  };
-
-  const savePlant = async (plantId: string) => {
-    if (!session?.user?.id) {
-      alert('Please log in to save plants');
-      return;
-    }
-    if (!baseUrl) {
-      console.error('Base URL not set, cannot save plant.');
-      alert('Error: Application not fully loaded. Please try again.');
-      return;
-    }
-
-    try {
-      const res = await fetch(`${baseUrl}/api/plant/save`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ userId: session.user.id, plantId }),
-      });
-      const data = await res.json();
-      if (res.ok) {
-        alert(data.message || 'Plant saved successfully!');
-        setSavedPlants((prev) => new Set([...prev, plantId]));
-      } else {
-        alert(data.error || data.message || 'Failed to save plant');
-      }
-    } catch (error) {
-      console.error('Error saving plant:', error);
-      alert('Failed to save plant');
-    }
-  };
 
   const fetchCategoryData = async (categorySlug: string) => {
     setLoading(true);
@@ -506,34 +433,14 @@ const PlantIdentifierClient: React.FC<PlantIdentifierClientProps> = ({
               {displayedPlants.map((plant) => (
                 <div
                   key={plant._id}
-                  className="p-4 shadow rounded bg-white cursor-pointer hover:shadow-lg transition-shadow relative"
-                  onClick={(e) => {
-                    if ((e.target as HTMLElement).closest('.save-icon')) return;
-                    router.push(`/plants/${plant._id}`);
-                  }}
+                  className="p-4 shadow rounded bg-white cursor-pointer hover:shadow-lg transition-shadow"
+                  onClick={() => router.push(`/plants/${plant._id}`)}
                 >
-                  <div className="relative">
-                    <img
-                      src={plant.image}
-                      alt={plant.name}
-                      className="w-full h-40 object-cover rounded"
-                    />
-                    <button
-                      className="save-icon absolute top-2 right-2 p-2 bg-white bg-opacity-75 rounded-full hover:bg-opacity-100 transition-opacity"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        savePlant(plant._id);
-                      }}
-                      disabled={!session?.user?.id}
-                      title={session?.user?.id ? 'Save Plant' : 'Login to Save'}
-                    >
-                      {savedPlants.has(plant._id) ? (
-                        <FaHeart className="text-red-500 w-5 h-5" />
-                      ) : (
-                        <FaRegHeart className="text-gray-500 w-5 h-5 hover:text-red-500" />
-                      )}
-                    </button>
-                  </div>
+                  <img
+                    src={plant.image}
+                    alt={plant.name}
+                    className="w-full h-40 object-cover rounded"
+                  />
                   <h5 className="mt-2 text-left font-medium">{plant.name}</h5>
                   <p className="mt-1 text-left text-sm text-gray-500">{plant.latin}</p>
                 </div>
