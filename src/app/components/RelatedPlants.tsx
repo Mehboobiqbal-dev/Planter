@@ -3,54 +3,53 @@
 
 import React from 'react';
 import { useRouter } from 'next/navigation';
-import { Plant } from '../../../types/plant'; // Make sure this path is correct
+import { Plant } from '../../../types/plant'; // Make sure this path is correct to your global types
 
 export interface RelatedPlantsProps {
   id: string; // ID of the current plant, to exclude it
-  allPlants: Plant[];
-  currentPlantCategory: string; // Added this prop
+  allPlants: Plant[]; // Or Partial<Plant>[] if that's what /api/plants returns
+  currentPlantCategory: string;
 }
 
 const RelatedPlants: React.FC<RelatedPlantsProps> = ({ id, allPlants, currentPlantCategory }) => {
   const router = useRouter();
 
-  // Filter by category first, then exclude the current plant, then slice
+  // Filter by category first, then exclude the current plant
   const relatedInCategory = allPlants
     .filter(p => p.category === currentPlantCategory && p._id !== id);
 
   // If not enough in the same category, fill with other plants (excluding current)
   const otherPlants = allPlants.filter(p => p.category !== currentPlantCategory && p._id !== id);
 
-  const plantsToDisplay = [
-    ...relatedInCategory,
-    ...otherPlants, // Add others if needed
-  ]
-  .slice(0, 4) // Take the top 4 overall unique plants
-  .map((plant) => ({
-    ...plant,
-    latin: plant.latin || plant.commonName || 'Details unavailable', // Better fallback
-  }));
+  // Combine and ensure uniqueness and limit
+  let combinedPlants = [...relatedInCategory];
+  for (const otherPlant of otherPlants) {
+    if (combinedPlants.length >= 4) break;
+    if (!combinedPlants.find(p => p._id === otherPlant._id)) { // Ensure uniqueness
+      combinedPlants.push(otherPlant);
+    }
+  }
+  
+  const plantsToDisplay = combinedPlants
+    .slice(0, 4) // Take the top 4 overall unique plants
+    .map((plant) => ({
+      ...plant,
+      latin: plant.latin || plant.commonName || 'Details unavailable', // Better fallback
+    }));
 
-
-  if (plantsToDisplay.length === 0 && allPlants.length > 1) {
-    // Fallback if no related plants found but other plants exist (e.g. unique category)
-    // Show some other random plants instead.
+  // Fallback if still no plants and other plants exist (e.g., current plant was the only one in its category)
+  if (plantsToDisplay.length === 0 && allPlants.filter(p => p._id !== id).length > 0) {
     const fallbackPlants = allPlants
-      .filter(p => p._id !== id)
-      .slice(0,4)
+      .filter(p => p._id !== id) // Exclude current plant
+      .slice(0, 4) // Take up to 4 other plants
       .map((plant) => ({
         ...plant,
         latin: plant.latin || plant.commonName || 'Details unavailable',
       }));
-      if (fallbackPlants.length > 0) {
-        // Not ideal to set state or change plantsToDisplay here directly,
-        // but for simplicity now. This logic could be improved.
-        // For this example, let's log and proceed. Better approach would be another useEffect or memo.
-        // console.warn("No plants in the same category, showing other random plants.");
-        // plantsToDisplay = fallbackPlants; // This line has no effect if not re-rendered.
-                                      // The initial plantsToDisplay will be used.
-                                      // Better to do this logic right when defining plantsToDisplay
-      }
+    // This reassignment won't trigger a re-render if plantsToDisplay was already calculated.
+    // The logic above for combinedPlants should handle this better.
+    // plantsToDisplay = fallbackPlants; // This line as-is might not have the intended effect.
+                                     // The `combinedPlants` logic should suffice.
   }
 
 
@@ -63,9 +62,8 @@ const RelatedPlants: React.FC<RelatedPlantsProps> = ({ id, allPlants, currentPla
             <div
               key={plant._id}
               className="min-w-[250px] flex-none sm:flex-auto bg-white rounded-lg shadow-md cursor-pointer hover:shadow-lg transition-shadow"
-              onClick={() => router.push(`/identify/${plant.slug || plant._id}`)} // Prefer slug for routing
+              onClick={() => router.push(`/identify/${plant.slug || plant._id}`)}
             >
-              {/* Consider Next/Image here for optimization */}
               <img
                 src={plant.image}
                 alt={plant.name}
@@ -74,13 +72,13 @@ const RelatedPlants: React.FC<RelatedPlantsProps> = ({ id, allPlants, currentPla
               />
               <div className="p-4">
                 <h3 className="text-lg font-semibold text-gray-800">{plant.name}</h3>
-                <p className="text-sm text-gray-600 line-clamp-2">{plant.latin}</p> {/* line-clamp for brevity */}
+                <p className="text-sm text-gray-600 line-clamp-2">{plant.latin}</p>
               </div>
             </div>
           ))}
 
           {/* Discover All Card */}
-          <div className="min-w-[250px] flex-none sm:flex-auto bg-white rounded-2xl border border-gray-200 shadow-sm p-6 flex flex-col items-center justify-center"> {/* justify-center */}
+          <div className="min-w-[250px] flex-none sm:flex-auto bg-white rounded-2xl border border-gray-200 shadow-sm p-6 flex flex-col items-center justify-center">
             <img
               src="https://strapi.myplantin.com/twig_e3ab677a36.webp"
               alt="Branch icon"
@@ -96,7 +94,9 @@ const RelatedPlants: React.FC<RelatedPlantsProps> = ({ id, allPlants, currentPla
           </div>
         </div>
       ) : (
-        <p className="text-gray-600">No related plants to show right now.</p>
+        allPlants.length > 1 && ( // Only show "No related plants" if there are other plants to potentially relate to
+          <p className="text-gray-600">No related plants to show right now.</p>
+        )
       )}
     </section>
   );

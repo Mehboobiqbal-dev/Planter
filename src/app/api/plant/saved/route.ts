@@ -1,66 +1,76 @@
+// File: app/api/plant/saved/route.ts
 import { NextRequest, NextResponse } from 'next/server';
-import { MongoClient, ObjectId } from 'mongodb'; // Added ObjectId import
-import jwt from 'jsonwebtoken';
-import { Plant } from '../../../../../types/plant';
-
-const JWT_SECRET = process.env.JWT_SECRET;
-
-interface TokenPayload {
-  userId: string;
-  email?: string;
-  iat: number;
-  exp: number;
-}
+import { MongoClient, ObjectId } from 'mongodb';
+import { Plant } from '../../../../../types/plant'; // Adjust path to your Plant type
 
 export async function GET(request: NextRequest) {
-  if (!JWT_SECRET) {
-    return NextResponse.json({ error: 'Server configuration error.' }, { status: 500 });
+  const { searchParams } = new URL(request.url);
+  const userId = searchParams.get('userId');
+
+  // **Crucial Check 1: Is userId present?**
+  if (!userId) {
+    console.error("[API /api/plant/saved] userId query parameter is missing.");
+    return NextResponse.json({ error: 'userId query parameter is required' }, { status: 400 });
   }
 
-  const authHeader = request.headers.get('Authorization');
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return NextResponse.json({ error: 'Unauthorized: Missing or malformed token.' }, { status: 401 });
+  // **Crucial Check 2: Basic validation of userId format (optional but good)**
+  if (typeof userId !== 'string' || userId.trim() === '') {
+    console.error(`[API /api/plant/saved] Invalid userId format: ${userId}`);
+    return NextResponse.json({ error: 'Invalid userId format' }, { status: 400 });
   }
 
-  const token = authHeader.split(' ')[1];
-  let decoded: TokenPayload;
-  try {
-    decoded = jwt.verify(token, JWT_SECRET) as TokenPayload;
-  } catch (err: any) {
-    return NextResponse.json(
-      {
-        error: `Unauthorized: ${err.name === 'TokenExpiredError' ? 'Token expired.' : 'Invalid token.'}`,
-      },
-      { status: 401 }
-    );
-  }
-
-  if (!decoded.userId) {
-    return NextResponse.json({ error: 'Unauthorized: Invalid token payload.' }, { status: 401 });
-  }
+  console.log(`[API /api/plant/saved] Attempting to fetch plants for userId: ${userId}`); // Log the userId being processed
 
   const MONGODB_URI = process.env.MONGODB_URI;
   if (!MONGODB_URI) {
+    console.error('[API /api/plant/saved] MONGODB_URI is not defined');
     return NextResponse.json({ error: 'Server configuration error: MONGODB_URI is missing.' }, { status: 500 });
   }
 
   const client = new MongoClient(MONGODB_URI);
   try {
     await client.connect();
-    const db = client.db('plantdb');
-    const savedPlants = db.collection('savedPlants');
+    const db = client.db('plantdb'); // Ensure your database name is correct
+    const savedPlantsCollection = db.collection('savedPlants');
     const plantsCollection = db.collection('plants');
 
-    const saved = await savedPlants.find({ userId: decoded.userId }).toArray();
-    const plantIds = saved.map((item) => item.plantId);
+    // Find saved plant entries for the given userId
+    const savedPlantEntries = await savedPlantsCollection.find({ userId: userId }).toArray();
 
-    const plants = await plantsCollection
-      .find({ _id: { $in: plantIds.map((id) => new ObjectId(id)) } })
+    if (savedPlantEntries.length === 0) {
+      console.log(`[API /api/plant/saved] No saved plant entries found for userId: ${userId}`);
+      return NextResponse.json({ plants: [] }, { status: 200 });
+    }
+    console.log(`[API /api/plant/saved] Found ${savedPlantEntries.length} saved plant entries for userId: ${userId}`);
+
+
+    const plantIds = savedPlantEntries.map((item) => item.plantId);
+
+    const plantObjectIds = plantIds.map(id => {
+      try {
+        return new ObjectId(id);
+      } catch (e) {
+        console.warn(`[API /api/plant/saved] Invalid ObjectId string encountered: ${id} for user ${userId}`);
+        return null;
+      }
+    }).filter(id => id !== null) as ObjectId[];
+
+
+    if (plantObjectIds.length === 0) {
+        console.log(`[API /api/plant/saved] No valid plant ObjectIds after filtering for userId: ${userId}`);
+        return NextResponse.json({ plants: [] }, { status: 200 });
+    }
+
+    const plantsData = await plantsCollection
+      .find({ _id: { $in: plantObjectIds } })
       .toArray();
+    console.log(`[API /api/plant/saved] Fetched ${plantsData.length} plant details for userId: ${userId}`);
 
-    const formattedPlants: Plant[] = plants.map((plantDoc) => ({
+
+    const formattedPlants: Plant[] = plantsData.map((plantDoc) => ({
       _id: plantDoc._id?.toString() || '',
       name: plantDoc.name || 'Unknown Plant',
+      // ... (rest of your formatting, ensure it's correct)
       category: plantDoc.category || 'Unknown',
       image: plantDoc.image || '/images/default-plant.jpg',
       latin: plantDoc.latin || undefined,
@@ -82,8 +92,12 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ plants: formattedPlants }, { status: 200 });
   } catch (err: any) {
+    console.error('[API /api/plant/saved] Error fetching saved plants:', err);
     return NextResponse.json(
-      { error: 'Failed to fetch saved plants', debug: process.env.NODE_ENV === 'development' ? err.message : undefined },
+      {
+        error: 'Failed to fetch saved plants from DB',
+        debug: process.env.NODE_ENV === 'development' ? err.message : undefined,
+      },
       { status: 500 }
     );
   } finally {
