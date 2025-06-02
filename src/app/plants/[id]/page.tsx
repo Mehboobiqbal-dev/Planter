@@ -9,7 +9,7 @@ import Skeleton from 'react-loading-skeleton';
 import 'react-loading-skeleton/dist/skeleton.css';
 import ImageLightbox from '../../components/ImageLightbox'; // Adjust path
 import PlantCareSection from '../../components/PlantCareSection'; // Adjust path
-// import RelatedPlants from '../../components/RelatedPlants'; // Uncomment if you use this
+import RelatedPlants from '../../components/RelatedPlants'; // Uncomment if you use this
 import PopularArticles from '../../components/PopularArticle'; // Adjust path
 import { Plant, Image as PlantImage } from '../../../../types/plant'; // Adjust path to your types
 
