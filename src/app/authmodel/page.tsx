@@ -1,7 +1,7 @@
 // File: app/authmodel/page.tsx
 'use client';
 
-import React, { useCallback, useState, useEffect } from 'react'; // Added useEffect
+import React, { useCallback, useState, useEffect } from 'react';
 import { FaApple, FaGoogle, FaFacebookF } from 'react-icons/fa';
 import { IoClose } from 'react-icons/io5';
 import { signIn } from 'next-auth/react';
@@ -21,8 +21,8 @@ import {
   setActiveTab,
   setShowForgotPassword,
   resetAuthState,
-} from '../redux/slices/authSlice'; // Verify path: e.g., ../../redux/slices/authSlice
-import { RootState } from '../redux/types'; // Verify path: e.g., ../../redux/types
+} from '../redux/slices/authSlice'; // Verify path
+import { RootState } from '../redux/types'; // Verify path
 
 const AuthModalPage: React.FC = () => {
   const dispatch = useDispatch();
@@ -49,8 +49,8 @@ const AuthModalPage: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    setFormError(''); // Clear local form error when relevant state changes
-    dispatch(setError('')); // Clear Redux error when tab or view changes
+    setFormError(''); 
+    dispatch(setError('')); 
   }, [activeTab, showForgotPassword, dispatch]);
 
   const handleSignIn = useCallback(async (e: React.MouseEvent<HTMLButtonElement>) => {
@@ -138,8 +138,7 @@ const AuthModalPage: React.FC = () => {
         dispatch(setError(data.error || `Sign-up failed (Status: ${response.status}).`));
         return;
       }
-
-      // If custom registration is successful, proceed to sign in with NextAuth
+      
       console.log('Custom registration successful, attempting NextAuth sign-in.');
       const signInResult = await signIn('credentials', {
         redirect: false,
@@ -150,8 +149,6 @@ const AuthModalPage: React.FC = () => {
       if (signInResult?.error) {
         console.error('Auto sign-in after sign-up failed:', signInResult.error);
         dispatch(setError('Sign-up was successful, but auto sign-in failed. Please sign in manually.'));
-        // Optionally, switch to sign-in tab:
-        // dispatch(setActiveTab('signin'));
       } else if (signInResult?.ok) {
         dispatch(resetAuthState());
         router.push('/');
@@ -188,7 +185,7 @@ const AuthModalPage: React.FC = () => {
     dispatch(setIsLoading(true));
 
     try {
-      const response = await fetch('/api/forgetpassword', { // Ensure this endpoint exists
+      const response = await fetch('/api/forgetpassword', { 
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: forgotEmail }),
@@ -227,7 +224,7 @@ const AuthModalPage: React.FC = () => {
       } else if (result?.ok) {
         dispatch(resetAuthState());
         // router.push('/'); // signIn with callbackUrl should handle redirect
-      } else if (!result?.url) { // If no error but no URL, something unexpected happened
+      } else if (!result?.url) { 
         dispatch(setError(`Sign-in with ${provider} did not complete as expected. Please try again.`));
       }
     } catch (err: unknown) {
@@ -238,312 +235,337 @@ const AuthModalPage: React.FC = () => {
     }
   }, [dispatch, router]);
 
-  const currentError = formError || error; // Display local form error first, then Redux error
+  const currentError = formError || error;
 
   return (
-    <div className="flex min-h-screen relative font-sans bg-gray-100">
+    <div className="flex flex-col md:flex-row min-h-screen font-sans bg-gradient-to-br from-[#E6FBF5] to-[#C0F0E4] md:bg-gray-100 relative overflow-x-hidden">
       <button
-        className="absolute top-4 right-4 text-gray-500 hover:text-gray-700 focus:outline-none z-10"
+        className="absolute top-5 right-5 sm:top-6 sm:right-6 bg-white rounded-full p-1.5 sm:p-2 text-gray-600 hover:text-gray-900 shadow-md focus:outline-none z-20"
         aria-label="Close"
         onClick={() => router.push('/')}
       >
         <IoClose size={24} />
       </button>
 
-      <div className="w-full md:w-1/2 flex flex-col justify-center space-y-6 min-h-screen px-4 sm:px-8 md:px-12 bg-white overflow-y-auto py-10">
-        <div className="flex border-b-2 border-gray-200 mb-8">
-          <button
-            onClick={() => { dispatch(setActiveTab('signin')); dispatch(setShowForgotPassword(false)); }}
-            className={`flex-1 text-center py-3 font-semibold transition-colors ${
-              activeTab === 'signin' && !showForgotPassword
-                ? 'text-green-500 border-b-4 border-green-500'
-                : 'text-gray-500 hover:text-green-500'
-            }`}
-          >
-            Sign in
-          </button>
-          <button
-            onClick={() => { dispatch(setActiveTab('signup')); dispatch(setShowForgotPassword(false)); }}
-            className={`flex-1 text-center py-3 font-semibold transition-colors ${
-              activeTab === 'signup' && !showForgotPassword
-                ? 'text-green-500 border-b-4 border-green-500'
-                : 'text-gray-500 hover:text-green-500'
-            }`}
-          >
-            Sign up
-          </button>
-        </div>
-
-        {currentError && (
-          <div className="text-red-600 text-center mb-4 font-medium p-3 bg-red-100 border border-red-300 rounded-md text-sm">
-            {currentError}
-          </div>
-        )}
-        {forgotMessage && !currentError && (
-          <div className="text-green-600 text-center mb-4 font-medium p-3 bg-green-100 border border-green-300 rounded-md text-sm">
-            {forgotMessage}
-          </div>
-        )}
-
-        <div className="flex space-x-2 sm:space-x-4 mb-8">
-          <button
-            onClick={() => handleSocialSignIn('apple')}
-            className="flex-1 h-12 border border-gray-300 rounded-lg flex items-center justify-center text-2xl text-gray-700 hover:bg-gray-100 disabled:opacity-60 transition-colors"
-            disabled={isLoading}
-            aria-label="Sign in with Apple"
-          >
-            <FaApple />
-          </button>
-          <button
-            onClick={() => handleSocialSignIn('google')}
-            className="flex-1 h-12 border border-gray-300 rounded-lg flex items-center justify-center text-2xl text-gray-700 hover:bg-gray-100 disabled:opacity-60 transition-colors"
-            disabled={isLoading}
-            aria-label="Sign in with Google"
-          >
-            <FaGoogle />
-          </button>
-          <button
-            onClick={() => handleSocialSignIn('facebook')}
-            className="flex-1 h-12 border border-gray-300 rounded-lg flex items-center justify-center text-2xl text-gray-700 hover:bg-gray-100 disabled:opacity-60 transition-colors"
-            disabled={isLoading}
-            aria-label="Sign in with Facebook"
-          >
-            <FaFacebookF />
-          </button>
-        </div>
-
-        <div className="flex items-center mb-8">
-          <hr className="flex-grow border-t border-gray-300" />
-          <span className="mx-4 text-gray-500 text-sm">Or</span>
-          <hr className="flex-grow border-t border-gray-300" />
-        </div>
-
-        {showForgotPassword ? (
-          <form className="space-y-6" onSubmit={(e) => e.preventDefault()}>
-            <div>
-              <label htmlFor="forgot-email" className="block font-semibold mb-1 text-left text-sm">
-                Enter your email <span className="text-red-500">*</span>
-              </label>
-              <input
-                id="forgot-email"
-                type="email"
-                placeholder="email@email.com"
-                className="w-full px-4 py-3 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-green-400 disabled:bg-gray-100 text-sm"
-                value={forgotEmail}
-                onChange={(e) => dispatch(setForgotEmail(e.target.value.trim()))}
-                required
-                disabled={isLoading}
+      {/* Form Section (Left panel on desktop, main content on mobile) */}
+      <div className="w-full md:w-1/2 flex flex-col items-center md:items-stretch md:justify-center md:bg-white md:overflow-y-auto">
+        <div className="w-full max-w-md md:max-w-none p-4 sm:p-0 md:px-8 lg:px-12 flex flex-col items-center md:py-10 md:h-full md:justify-center">
+          
+          {/* Mobile-only Header */}
+          <div className="text-center mt-12 sm:mt-8 mb-5 md:hidden">
+            <h1 className="text-xl sm:text-2xl font-bold text-gray-700 mb-3 leading-tight">
+              One solution for all<br />the platforms
+            </h1>
+            <div className="mx-auto w-[100px] h-[65px] sm:w-[120px] sm:h-[75px]">
+              <img 
+                src="https://myplantin.com/_next/image?url=https%3A%2F%2Fstrapi.myplantin.com%2Fweb_design_1_2f721fecd6.webp&w=256&q=75" 
+                alt="Platforms illustration" 
+                className="w-full h-full object-contain" 
               />
             </div>
-            <button
-              type="button"
-              onClick={handleForgotPassword}
-              className="w-full bg-green-400 text-white py-3 rounded-full font-semibold text-lg hover:bg-green-500 focus:outline-none disabled:opacity-60 flex items-center justify-center transition-colors"
-              disabled={isLoading}
-            >
-              {isLoading ? (
-                <>
-                  <svg className="animate-spin h-5 w-5 mr-3 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                  </svg>
-                  Sending...
-                </>
-              ) : (
-                'Send Reset Link'
-              )}
-            </button>
-            <button
-              type="button"
-              onClick={() => dispatch(setShowForgotPassword(false))}
-              className="text-sm text-gray-600 hover:underline w-full text-center mt-2"
-              disabled={isLoading}
-            >
-              Back to Sign In
-            </button>
-          </form>
-        ) : activeTab === 'signin' ? (
-          <form className="space-y-6" onSubmit={(e) => e.preventDefault()}>
-            <div>
-              <label htmlFor="signin-email" className="block font-semibold mb-1 text-left text-sm">
-                Enter your email <span className="text-red-500">*</span>
-              </label>
-              <input
-                id="signin-email"
-                type="email"
-                placeholder="email@email.com"
-                className="w-full px-4 py-3 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-green-400 disabled:bg-gray-100 text-sm"
-                value={email}
-                onChange={(e) => dispatch(setEmail(e.target.value.trim()))}
-                required
-                disabled={isLoading}
-              />
+          </div>
+
+          {/* Form Card for mobile, direct content container for desktop */}
+          <div className="bg-white md:bg-transparent rounded-xl md:rounded-none shadow-xl md:shadow-none p-6 sm:p-8 md:p-0 w-full">
+            <div className="flex border-b-2 border-gray-200 mb-6 sm:mb-8">
+              <button
+                onClick={() => { dispatch(setActiveTab('signin')); dispatch(setShowForgotPassword(false)); }}
+                className={`flex-1 text-center py-2.5 sm:py-3 font-semibold text-base sm:text-lg transition-colors ${
+                  activeTab === 'signin' && !showForgotPassword
+                    ? 'text-[#20BFA9] border-b-2 border-[#20BFA9]'
+                    : 'text-gray-400 hover:text-[#20BFA9]'
+                }`}
+              >
+                Sign in
+              </button>
+              <button
+                onClick={() => { dispatch(setActiveTab('signup')); dispatch(setShowForgotPassword(false)); }}
+                className={`flex-1 text-center py-2.5 sm:py-3 font-semibold text-base sm:text-lg transition-colors ${
+                  activeTab === 'signup' && !showForgotPassword
+                    ? 'text-[#20BFA9] border-b-2 border-[#20BFA9]'
+                    : 'text-gray-400 hover:text-[#20BFA9]'
+                }`}
+              >
+                Sign up
+              </button>
             </div>
-            <div>
-              <div className="flex justify-between items-center mb-1">
-                <label htmlFor="signin-password" className="block font-semibold text-left text-sm">
-                  Enter password <span className="text-red-500">*</span>
-                </label>
+
+            {currentError && (
+              <div className="text-red-600 text-center mb-4 font-medium p-3 bg-red-100 border border-red-200 rounded-md text-sm">
+                {currentError}
+              </div>
+            )}
+            {forgotMessage && !currentError && (
+              <div className="text-green-600 text-center mb-4 font-medium p-3 bg-green-100 border border-green-200 rounded-md text-sm">
+                {forgotMessage}
+              </div>
+            )}
+
+            <div className="flex space-x-3 sm:space-x-4 mb-6 sm:mb-8">
+              <button
+                onClick={() => handleSocialSignIn('apple')}
+                className="flex-1 h-11 sm:h-12 border border-gray-300 rounded-lg flex items-center justify-center text-xl sm:text-2xl text-black hover:bg-gray-50 disabled:opacity-60 transition-colors"
+                disabled={isLoading}
+                aria-label="Sign in with Apple"
+              >
+                <FaApple />
+              </button>
+              <button
+                onClick={() => handleSocialSignIn('google')}
+                className="flex-1 h-11 sm:h-12 border border-gray-300 rounded-lg flex items-center justify-center text-xl sm:text-2xl text-gray-700 hover:bg-gray-50 disabled:opacity-60 transition-colors"
+                disabled={isLoading}
+                aria-label="Sign in with Google"
+              >
+                <FaGoogle />
+              </button>
+              <button
+                onClick={() => handleSocialSignIn('facebook')}
+                className="flex-1 h-11 sm:h-12 border border-gray-300 rounded-lg flex items-center justify-center text-xl sm:text-2xl text-[#1877F2] hover:bg-gray-50 disabled:opacity-60 transition-colors"
+                disabled={isLoading}
+                aria-label="Sign in with Facebook"
+              >
+                <FaFacebookF />
+              </button>
+            </div>
+
+            <div className="flex items-center mb-6 sm:mb-8">
+              <hr className="flex-grow border-t border-gray-200" />
+              <span className="mx-3 sm:mx-4 text-gray-400 text-xs sm:text-sm">Or</span>
+              <hr className="flex-grow border-t border-gray-200" />
+            </div>
+
+            {showForgotPassword ? (
+              <form className="space-y-5 sm:space-y-6" onSubmit={(e) => e.preventDefault()}>
+                <div>
+                  <label htmlFor="forgot-email" className="block font-semibold text-gray-700 mb-1.5 text-sm">
+                    Enter your email <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    id="forgot-email"
+                    type="email"
+                    placeholder="email@email.com"
+                    className="w-full px-4 py-2.5 sm:py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#20BFA9] focus:border-[#20BFA9] disabled:bg-gray-50 text-sm placeholder-gray-400"
+                    value={forgotEmail}
+                    onChange={(e) => dispatch(setForgotEmail(e.target.value.trim()))}
+                    required
+                    disabled={isLoading}
+                  />
+                </div>
                 <button
                   type="button"
-                  className="text-xs text-gray-600 hover:underline"
-                  onClick={() => dispatch(setShowForgotPassword(true))}
+                  onClick={handleForgotPassword}
+                  className="w-full bg-[#89E0C2] text-white py-3 rounded-full font-bold text-base sm:text-lg hover:bg-[#7BCFB0] focus:outline-none disabled:opacity-60 flex items-center justify-center transition-colors"
                   disabled={isLoading}
                 >
-                  Forgot password?
+                  {isLoading ? (
+                    <>
+                      <svg className="animate-spin h-5 w-5 mr-2.5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                      </svg>
+                      Sending...
+                    </>
+                  ) : (
+                    'Send Reset Link'
+                  )}
                 </button>
-              </div>
-              <input
-                id="signin-password"
-                type="password"
-                placeholder="Password"
-                className="w-full px-4 py-3 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-green-400 disabled:bg-gray-100 text-sm"
-                value={password}
-                onChange={(e) => dispatch(setPassword(e.target.value))}
-                required
-                disabled={isLoading}
-              />
-            </div>
-            <button
-              type="button"
-              onClick={handleSignIn}
-              className="w-full bg-gradient-to-r from-green-400 to-green-300 text-white py-3 rounded-full font-semibold text-lg hover:from-green-500 hover:to-green-400 focus:outline-none disabled:opacity-60 flex items-center justify-center transition-colors"
-              disabled={isLoading}
-            >
-              {isLoading ? (
-                <>
-                  <svg className="animate-spin h-5 w-5 mr-3 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                  </svg>
-                  Signing in...
-                </>
-              ) : (
-                'Sign in'
-              )}
-            </button>
-          </form>
-        ) : ( // activeTab === 'signup'
-          <form className="space-y-4" onSubmit={(e) => e.preventDefault()}>
-            <div>
-              <label htmlFor="signup-name" className="block font-semibold mb-1 text-sm">
-                Enter your name <span className="text-red-500">*</span>
-              </label>
-              <input
-                id="signup-name"
-                type="text"
-                placeholder="Your name"
-                className="w-full px-4 py-3 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-green-400 disabled:bg-gray-100 text-sm"
-                value={name}
-                onChange={(e) => dispatch(setName(e.target.value))} // Allow spaces in name, trim later if needed
-                required
-                disabled={isLoading}
-              />
-            </div>
-            <div>
-              <label htmlFor="signup-email" className="block font-semibold mb-1 text-sm">
-                Enter your email <span className="text-red-500">*</span>
-              </label>
-              <input
-                id="signup-email"
-                type="email"
-                placeholder="email@email.com"
-                className="w-full px-4 py-3 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-green-400 disabled:bg-gray-100 text-sm"
-                value={email}
-                onChange={(e) => dispatch(setEmail(e.target.value.trim()))}
-                required
-                disabled={isLoading}
-              />
-            </div>
-            <div className="flex flex-col sm:flex-row sm:space-x-4 space-y-4 sm:space-y-0">
-              <div className="w-full sm:w-1/2">
-                <label htmlFor="signup-password"className="block font-semibold mb-1 text-sm">
-                  Enter password <span className="text-red-500">*</span>
-                </label>
-                <input
-                  id="signup-password"
-                  type="password"
-                  placeholder="Password (min 6 chars)"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-green-400 disabled:bg-gray-100 text-sm"
-                  value={password}
-                  onChange={(e) => dispatch(setPassword(e.target.value))}
-                  required
+                <button
+                  type="button"
+                  onClick={() => dispatch(setShowForgotPassword(false))}
+                  className="text-sm text-gray-500 hover:underline w-full text-center pt-1 sm:pt-2"
                   disabled={isLoading}
-                />
-              </div>
-              <div className="w-full sm:w-1/2">
-                <label htmlFor="signup-confirm-password"className="block font-semibold mb-1 text-sm">
-                  Confirm password <span className="text-red-500">*</span>
-                </label>
-                <input
-                  id="signup-confirm-password"
-                  type="password"
-                  placeholder="Confirm password"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-green-400 disabled:bg-gray-100 text-sm"
-                  value={confirmPassword}
-                  onChange={(e) => dispatch(setConfirmPassword(e.target.value))}
-                  required
+                >
+                  Back to Sign In
+                </button>
+              </form>
+            ) : activeTab === 'signin' ? (
+              <form className="space-y-5 sm:space-y-6" onSubmit={(e) => e.preventDefault()}>
+                <div>
+                  <label htmlFor="signin-email" className="block font-semibold text-gray-700 mb-1.5 text-sm">
+                    Enter your email<span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    id="signin-email"
+                    type="email"
+                    placeholder="email@email.com"
+                    className="w-full px-4 py-2.5 sm:py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#20BFA9] focus:border-[#20BFA9] disabled:bg-gray-50 text-sm placeholder-gray-400"
+                    value={email}
+                    onChange={(e) => dispatch(setEmail(e.target.value.trim()))}
+                    required
+                    disabled={isLoading}
+                  />
+                </div>
+                <div>
+                  <div className="flex justify-between items-center mb-1.5">
+                    <label htmlFor="signin-password" className="block font-semibold text-gray-700 text-sm">
+                      Enter password<span className="text-red-500">*</span>
+                    </label>
+                    <button
+                      type="button"
+                      className="text-xs text-gray-500 hover:text-[#20BFA9] hover:underline"
+                      onClick={() => dispatch(setShowForgotPassword(true))}
+                      disabled={isLoading}
+                    >
+                      Forgot password?
+                    </button>
+                  </div>
+                  <input
+                    id="signin-password"
+                    type="password"
+                    placeholder="Password"
+                    className="w-full px-4 py-2.5 sm:py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#20BFA9] focus:border-[#20BFA9] disabled:bg-gray-50 text-sm placeholder-gray-400"
+                    value={password}
+                    onChange={(e) => dispatch(setPassword(e.target.value))}
+                    required
+                    disabled={isLoading}
+                  />
+                </div>
+                <button
+                  type="button"
+                  onClick={handleSignIn}
+                  className="w-full bg-[#89E0C2] text-white py-3 rounded-full font-bold text-base sm:text-lg hover:bg-[#7BCFB0] focus:outline-none disabled:opacity-60 flex items-center justify-center transition-colors"
                   disabled={isLoading}
-                />
-              </div>
-            </div>
-            <div className="flex items-start space-x-3 pt-2">
-              <input
-                id="terms-accepted"
-                type="checkbox"
-                checked={termsAccepted}
-                onChange={(e) => dispatch(setTermsAccepted(e.target.checked))}
-                className="mt-1 h-4 w-4 rounded border-gray-300 text-green-500 focus:ring-green-400 disabled:opacity-70"
-                disabled={isLoading}
-              />
-              <label htmlFor="terms-accepted" className="text-xs text-gray-600">
-                I agree to the{' '}
-                <a href="/privacy" target="_blank" rel="noopener noreferrer" className="text-green-500 font-medium hover:underline">
-                  Privacy Policy, Terms of Service
-                </a>{' '}
-                and{' '}
-                <a href="/subscription" target="_blank" rel="noopener noreferrer" className="text-green-500 font-medium hover:underline">
-                  Subscription Policy
-                </a>
-              </label>
-            </div>
-            <div className="flex items-start space-x-3">
-              <input
-                id="notifications-accepted"
-                type="checkbox"
-                checked={notificationsAccepted}
-                onChange={(e) => dispatch(setNotificationsAccepted(e.target.checked))}
-                className="mt-1 h-4 w-4 rounded border-gray-300 text-green-500 focus:ring-green-400 disabled:opacity-70"
-                disabled={isLoading}
-              />
-              <label htmlFor="notifications-accepted" className="text-xs text-gray-600">
-                I agree to receive important notifications and updates via email
-              </label>
-            </div>
-            <button
-              type="button"
-              onClick={handleSignUp}
-              className="w-full bg-green-400 text-white py-3 rounded-full font-semibold text-lg hover:bg-green-500 focus:outline-none disabled:opacity-60 flex items-center justify-center transition-colors"
-              disabled={isLoading || !termsAccepted}
-            >
-              {isLoading ? (
-                <>
-                  <svg className="animate-spin h-5 w-5 mr-3 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/>
-                  </svg>
-                  Signing up...
-                </>
-              ) : (
-                'Sign up'
-              )}
-            </button>
-          </form>
-        )}
+                >
+                  {isLoading ? (
+                    <>
+                      <svg className="animate-spin h-5 w-5 mr-2.5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                      </svg>
+                      Signing in...
+                    </>
+                  ) : (
+                    'Sign in'
+                  )}
+                </button>
+              </form>
+            ) : ( // activeTab === 'signup'
+              <form className="space-y-4 sm:space-y-3" onSubmit={(e) => e.preventDefault()}>
+                <div>
+                  <label htmlFor="signup-name" className="block font-semibold text-gray-700 mb-1.5 text-sm">
+                    Enter your name <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    id="signup-name"
+                    type="text"
+                    placeholder="Your name"
+                    className="w-full px-4 py-2.5 sm:py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#20BFA9] focus:border-[#20BFA9] disabled:bg-gray-50 text-sm placeholder-gray-400"
+                    value={name}
+                    onChange={(e) => dispatch(setName(e.target.value))}
+                    required
+                    disabled={isLoading}
+                  />
+                </div>
+                <div>
+                  <label htmlFor="signup-email" className="block font-semibold text-gray-700 mb-1.5 text-sm">
+                    Enter your email <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    id="signup-email"
+                    type="email"
+                    placeholder="email@email.com"
+                    className="w-full px-4 py-2.5 sm:py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#20BFA9] focus:border-[#20BFA9] disabled:bg-gray-50 text-sm placeholder-gray-400"
+                    value={email}
+                    onChange={(e) => dispatch(setEmail(e.target.value.trim()))}
+                    required
+                    disabled={isLoading}
+                  />
+                </div>
+                <div className="flex flex-col sm:flex-row sm:space-x-3 space-y-4 sm:space-y-0">
+                  <div className="w-full sm:w-1/2">
+                    <label htmlFor="signup-password"className="block font-semibold text-gray-700 mb-1.5 text-sm">
+                      Enter password <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      id="signup-password"
+                      type="password"
+                      placeholder="Password (min 6 chars)"
+                      className="w-full px-4 py-2.5 sm:py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#20BFA9] focus:border-[#20BFA9] disabled:bg-gray-50 text-sm placeholder-gray-400"
+                      value={password}
+                      onChange={(e) => dispatch(setPassword(e.target.value))}
+                      required
+                      disabled={isLoading}
+                    />
+                  </div>
+                  <div className="w-full sm:w-1/2">
+                    <label htmlFor="signup-confirm-password"className="block font-semibold text-gray-700 mb-1.5 text-sm">
+                      Confirm password <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      id="signup-confirm-password"
+                      type="password"
+                      placeholder="Confirm password"
+                      className="w-full px-4 py-2.5 sm:py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#20BFA9] focus:border-[#20BFA9] disabled:bg-gray-50 text-sm placeholder-gray-400"
+                      value={confirmPassword}
+                      onChange={(e) => dispatch(setConfirmPassword(e.target.value))}
+                      required
+                      disabled={isLoading}
+                    />
+                  </div>
+                </div>
+                <div className="pt-1 space-y-2.5">
+                    <div className="flex items-start space-x-2 sm:space-x-3">
+                    <input
+                        id="terms-accepted"
+                        type="checkbox"
+                        checked={termsAccepted}
+                        onChange={(e) => dispatch(setTermsAccepted(e.target.checked))}
+                        className="mt-0.5 sm:mt-1 h-4 w-4 rounded border-gray-300 text-[#20BFA9] focus:ring-[#20BFA9] disabled:opacity-70"
+                        disabled={isLoading}
+                    />
+                    <label htmlFor="terms-accepted" className="text-xs text-gray-500">
+                        I agree to the{' '}
+                        <a href="/privacy" target="_blank" rel="noopener noreferrer" className="text-[#20BFA9] font-medium hover:underline">
+                        Privacy Policy, Terms of Service
+                        </a>{' '}
+                        and{' '}
+                        <a href="/subscription" target="_blank" rel="noopener noreferrer" className="text-[#20BFA9] font-medium hover:underline">
+                        Subscription Policy
+                        </a>
+                    </label>
+                    </div>
+                    <div className="flex items-start space-x-2 sm:space-x-3">
+                    <input
+                        id="notifications-accepted"
+                        type="checkbox"
+                        checked={notificationsAccepted}
+                        onChange={(e) => dispatch(setNotificationsAccepted(e.target.checked))}
+                        className="mt-0.5 sm:mt-1 h-4 w-4 rounded border-gray-300 text-[#20BFA9] focus:ring-[#20BFA9] disabled:opacity-70"
+                        disabled={isLoading}
+                    />
+                    <label htmlFor="notifications-accepted" className="text-xs text-gray-500">
+                        I agree to receive important notifications and updates via email
+                    </label>
+                    </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleSignUp}
+                  className="w-full bg-[#89E0C2] text-white py-3 rounded-full font-bold text-base sm:text-lg hover:bg-[#7BCFB0] focus:outline-none disabled:opacity-60 flex items-center justify-center transition-colors !mt-5"
+                  disabled={isLoading || !termsAccepted}
+                >
+                  {isLoading ? (
+                    <>
+                      <svg className="animate-spin h-5 w-5 mr-2.5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/>
+                      </svg>
+                      Signing up...
+                    </>
+                  ) : (
+                    'Sign up'
+                  )}
+                </button>
+              </form>
+            )}
+          </div>
+          <div className="pb-8 md:hidden"></div> {/* Extra space at bottom for scroll on mobile */}
+        </div>
       </div>
 
+      {/* Right Promo Panel (Desktop Only) */}
       <div
-        className="hidden md:flex w-1/2 flex-col justify-center items-center space-y-6 min-h-screen px-12 bg-teal-300 text-center"
+        className="hidden md:flex md:w-1/2 flex-col justify-center items-center space-y-6 min-h-screen px-12 bg-teal-300 text-center"
         style={{
           backgroundImage: `url('https://strapi.myplantin.com/Sign_up_Illustration_6a13a81c32.webp')`,
           backgroundSize: 'cover',
@@ -574,7 +596,7 @@ const AuthModalPage: React.FC = () => {
               </li>
             </ul>
           </div>
-        ) : (
+        ) : ( // Covers 'signup' and 'forgotPassword' states for promo content
           <div className="p-8 bg-white/70 backdrop-blur-md rounded-lg shadow-xl">
             <h2 className="text-3xl font-extrabold tracking-tight text-gray-800 mb-6">
               With PlantIn you can

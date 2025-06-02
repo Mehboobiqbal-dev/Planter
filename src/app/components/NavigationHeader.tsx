@@ -1,3 +1,4 @@
+// src/components/NavigationHeader.tsx (or your actual path)
 "use client";
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
@@ -28,7 +29,7 @@ const problemCategories = [
   { name: "Diseases", slug: "diseases" },
   { name: "Pests", slug: "pests" },
   { name: "Weeds", slug: "weeds" },
-  { name: "Ask the Botanist", slug: "/ask-the-botanist" }, // This should likely be a full path if it's a page
+  { name: "Ask the Botanist", slug: "/ask-the-botanist" },
 ];
 
 interface ProblemDisplay {
@@ -48,7 +49,7 @@ const companyCategories = [
   { name: "Mushroom ID App", slug: "/mushroom-identification" },
   { name: "About Us", slug: "/about-us" },
   { name: "PlantIn App Review", slug: "/review" },
-  { name: "Rating & Reviews", slug: "/" }, // Consider a more specific slug
+  { name: "Rating & Reviews", slug: "/" },
   { name: "Hero of Ukraine", slug: "/hero-of-ukraine" },
   { name: "FAQ", slug: "/faq" },
   { name: "Contact Us", slug: "/contact-us" },
@@ -75,6 +76,14 @@ export function NavigationHeader() {
   const [isNotificationBarOpen, setIsNotificationBarOpen] = useState(false);
   const [savedPlants, setSavedPlants] = useState<Plant[]>([]);
   const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [baseUrl, setBaseUrl] = useState(''); // To construct absolute URLs if needed, though relative is fine here
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setBaseUrl(window.location.origin); // Not strictly needed for relative /api calls
+    }
+  }, []);
+
 
   const toggleDropdown = () => {
     setIsDropdownOpen((prev) => !prev);
@@ -82,62 +91,76 @@ export function NavigationHeader() {
 
   const toggleMiniBar = () => {
     setIsMiniBarOpen((prev) => !prev);
-    setIsNotificationBarOpen(false); // Close notification bar when opening plants bar
+    setIsNotificationBarOpen(false);
   };
 
   const toggleNotificationBar = () => {
     setIsNotificationBarOpen((prev) => !prev);
-    setIsMiniBarOpen(false); // Close plants bar when opening notification bar
+    setIsMiniBarOpen(false);
   };
 
-  // Fetch saved plants when the mini-bar is opened and user is authenticated
   useEffect(() => {
-    if (isMiniBarOpen && status === "authenticated") { // Check status instead of session.user.id directly for robustness
+    // Only fetch if the bar is open, user is authenticated, and session object is available
+    if (isMiniBarOpen && status === "authenticated" && session?.user) {
       const fetchSavedPlants = async () => {
+        // Extract userId from session. Adjust if your session structure is different.
+        // Common patterns: session.user.id, session.user._id, session.userId, session.sub
+        const userId = (session.user as any)?.id || (session.user as any)?.sub;
+
+        if (!userId) {
+          console.warn("[NavigationHeader] User ID not found in session. Cannot fetch saved plants.");
+          setSavedPlants([]);
+          return;
+        }
+
         try {
-          // Use a relative path for same-origin API calls
-          const url = `/api/plant/saved`; // API authenticates via cookie, not userId param
+          // Construct URL with userId query parameter
+          const url = `/api/plant/saved?userId=${encodeURIComponent(String(userId))}`;
+          console.log(`[NavigationHeader] Fetching saved plants from: ${url}`);
 
           const res = await fetch(url, {
             cache: 'no-store',
-            credentials: 'include', // Crucial for sending cookies with client-side fetch
+            // credentials: 'include', // 'include' is generally for cross-origin with cookies.
+                                    // For same-origin, cookies are usually sent by default by the browser.
+                                    // However, Next.js fetch on server components might behave differently.
+                                    // For client-side fetch to same-origin API routes using App Router,
+                                    // cookies (like the NextAuth session cookie) should be handled automatically.
+                                    // If issues persist, you might add it back, but typically not needed for same-origin.
           });
 
           if (!res.ok) {
-            const errorText = await res.text(); // Get more info on error
-            console.error(`Failed to fetch saved plants. Status: ${res.status}. Response: ${errorText}`);
-            throw new Error(`Failed to fetch saved plants (status ${res.status})`);
+            const errorText = await res.text();
+            console.error(`[NavigationHeader] Failed to fetch saved plants. Status: ${res.status}. UserID: ${userId}. Response: ${errorText}`);
+            setSavedPlants([]); // Clear on error
+            return; // Important to return here
           }
           const data = await res.json();
-          setSavedPlants(data.plants || []);
+          if (data.plants && Array.isArray(data.plants)) {
+            setSavedPlants(data.plants);
+            console.log(`[NavigationHeader] Successfully fetched ${data.plants.length} saved plants for user ${userId}.`);
+          } else {
+            console.warn('[NavigationHeader] Fetched saved plants, but data.plants is not an array or is missing.', data);
+            setSavedPlants([]);
+          }
         } catch (error) {
-          // The error is already logged by the above console.error
-          // console.error('Error in fetchSavedPlants:', error);
-          setSavedPlants([]); // Clear or show error state
+          console.error('[NavigationHeader] Error in fetchSavedPlants:', error);
+          setSavedPlants([]);
         }
       };
       fetchSavedPlants();
     } else if (!isMiniBarOpen) {
-      // Optionally clear saved plants if the bar is closed to free up memory,
-      // or keep them cached if preferred.
-      // setSavedPlants([]);
+      // Optionally clear or don't refetch
     }
-  }, [isMiniBarOpen, status]); // Depend on status to re-evaluate if auth changes
+  }, [isMiniBarOpen, status, session]); // Add session to dependencies
 
-  // Mock fetch for notifications (replace with actual API call)
   useEffect(() => {
     if (isNotificationBarOpen && status === "authenticated") {
       const fetchNotifications = async () => {
         try {
-          // Mock API call for notifications (replace with actual endpoint)
           const mockNotifications: Notification[] = [
             { _id: "1", message: "Your plant needs watering!", date: "2025-05-25" },
             { _id: "2", message: "New article on plant care available.", date: "2025-05-24" },
           ];
-          // Example: const response = await fetch('/api/notifications', { credentials: 'include' });
-          // if (!response.ok) throw new Error('Failed to fetch notifications');
-          // const data = await response.json();
-          // setNotifications(data.notifications || []);
           setNotifications(mockNotifications);
         } catch (error) {
           console.error('Error fetching notifications:', error);
@@ -173,7 +196,7 @@ export function NavigationHeader() {
 
               {/* Mobile Top Navigation */}
               <div className="lg:hidden flex items-center gap-4">
-                {status === "authenticated" ? (
+                {status === "authenticated" && session?.user ? ( // Added session?.user check
                   <>
                     <Link
                       href="/subscription"
@@ -230,17 +253,21 @@ export function NavigationHeader() {
                       onClick={toggleDropdown}
                     />
                   </>
-                ) : (
+                ) : status === "loading" ? (
+                  <div className="flex items-center gap-4"> {/* Placeholder while loading session */}
+                    <div className="h-6 w-6 bg-gray-200 rounded-full animate-pulse"></div>
+                    <div className="h-8 w-8 bg-gray-200 rounded-full animate-pulse"></div>
+                  </div>
+                ) : ( // Unauthenticated
                   <>
-                    {/* <IoLeafOutline className="text-teal-600 h-6 w-6" /> Remove if redundant */}
                     <Link
-                      href="/authmodel" // Your login/signup modal page
+                      href="/authmodel"
                       className="px-3 py-1.5 font-semibold rounded-2xl bg-teal-600 text-white text-sm"
                     >
                       Sign Up Free
                     </Link>
                     <Link
-                      href="/authmodel" // Your login/signup modal page
+                      href="/authmodel"
                       className="px-3 py-1.5 font-medium text-neutral-800 text-sm"
                     >
                       Log In
@@ -300,7 +327,7 @@ export function NavigationHeader() {
 
               {/* Desktop Right Side Actions */}
               <div className="hidden lg:flex items-center gap-3">
-                {status === "authenticated" ? (
+                {status === "authenticated" && session?.user ? ( // Added session?.user check
                   <>
                     <Link href="/subscription" className="px-4 py-2 font-semibold rounded-2xl bg-purple-600 text-white flex items-center gap-2 relative">
                       <img src="https://myplantin.com/_next/image?url=https%3A%2F%2Fstrapi.myplantin.com%2Fenvelop_free_82a5a66816.webp&w=96&q=75" alt="Message Icon" className="h-5 w-5 object-contain" />
@@ -328,7 +355,7 @@ export function NavigationHeader() {
                             <ul className="py-2">
                               {savedPlants.map((plant) => (
                                 <li key={plant._id} className="flex items-center px-4 py-2 hover:bg-gray-100 cursor-pointer" onClick={() => { router.push(`/plants/${plant.slug || plant._id}`); setIsMiniBarOpen(false); }}>
-                                  <img src={plant.image} alt={plant.name} className="h-12 w-12 rounded-md object-cover mr-3" />
+                                  <img src={plant.image || '/images/default-plant.jpg'} alt={plant.name} className="h-12 w-12 rounded-md object-cover mr-3" onError={(e) => (e.currentTarget.src = '/images/default-plant.jpg')} />
                                   <div>
                                     <h4 className="text-sm font-semibold uppercase">{plant.name}</h4>
                                     <p className="text-xs text-blue-500">Added to My plants</p>
@@ -338,7 +365,7 @@ export function NavigationHeader() {
                               ))}
                             </ul>
                           ) : (
-                            <p className="px-4 py-4 text-gray-500 text-sm text-center">No saved plants yet.</p>
+                            <p className="px-4 py-4 text-gray-500 text-sm text-center">No saved plants yet. <Link href="/identify/all-plants" className="text-teal-600 hover:underline">Browse plants</Link> to add some!</p>
                           )}
                           <div className="p-4 border-t">
                             <Link href="/my-plants" className="block w-full text-center px-4 py-2 bg-teal-500 text-white rounded-full font-medium hover:bg-teal-600" onClick={() => setIsMiniBarOpen(false)}>View my plants</Link>
@@ -414,7 +441,12 @@ export function NavigationHeader() {
                       )}
                     </div>
                   </>
-                ) : (
+                ) : status === "loading" ? (
+                    <div className="flex items-center gap-3"> {/* Placeholder while loading session */}
+                       <div className="h-8 w-24 bg-gray-200 rounded-2xl animate-pulse"></div>
+                       <div className="h-8 w-16 bg-gray-200 rounded-2xl animate-pulse"></div>
+                    </div>
+                ) :( // Unauthenticated
                   <>
                     <Link href="/authmodel" className="px-4 py-2 font-semibold rounded-2xl bg-teal-700 text-white items-center gap-2 hidden lg:flex">Sign Up Free</Link>
                     <Link href="/authmodel" className="px-4 py-2 font-medium text-neutral-800 hidden lg:flex">Log In</Link>
@@ -427,7 +459,7 @@ export function NavigationHeader() {
       </header>
 
       {/* Bottom Navigation Bar for Mobile */}
-      <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-blue-100 shadow-md z-40"> {/* z-40 to be below modals like dropdowns */}
+      <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-blue-100 shadow-md z-40">
         <div className="flex justify-around items-center h-16">
           <Link href="/identify" className="flex flex-col items-center text-gray-700 hover:text-teal-600 p-2">
             <IoLeafOutline className="h-6 w-6" />
@@ -441,7 +473,7 @@ export function NavigationHeader() {
             <IoBugOutline className="h-6 w-6" />
             <span className="text-xs mt-1">Disease ID</span>
           </Link>
-          <Link href="/about-us" className="flex flex-col items-center text-gray-700 hover:text-teal-600 p-2"> {/* Or a more general "More" page */}
+          <Link href="/about-us" className="flex flex-col items-center text-gray-700 hover:text-teal-600 p-2">
             <IoGridOutline className="h-6 w-6" />
             <span className="text-xs mt-1">More</span>
           </Link>

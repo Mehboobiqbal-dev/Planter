@@ -81,29 +81,63 @@ const PlantIdentifierClient: React.FC<PlantIdentifierClientProps> = ({
 
   useEffect(() => {
     const fetchUserSavedPlants = async () => {
+      // Only proceed if authenticated, session user exists, and baseUrl is set
       if (sessionStatus === 'authenticated' && session?.user && baseUrl) {
+        // Extract userId from session. Adjust if your session structure is different.
+        const userId = (session.user as any)?.id || (session.user as any)?.sub;
+
+        if (!userId) {
+          console.warn("[PlantIdentifierClient] fetchUserSavedPlants: User ID not found in session. Cannot fetch saved plants.");
+          setSavedPlantIds(new Set()); // Ensure state is clean if no user ID
+          return;
+        }
+
         try {
-          const response = await fetch(`${baseUrl}/api/plant/saved`); // GET request
+          // Append userId as a query parameter
+          const url = `${baseUrl}/api/plant/saved?userId=${encodeURIComponent(String(userId))}`;
+          const response = await fetch(url);
+
           if (response.ok) {
             const data = await response.json();
             if (data.plants && Array.isArray(data.plants)) {
               setSavedPlantIds(new Set(data.plants.map((p: Plant) => p._id)));
+            } else {
+              console.warn('[PlantIdentifierClient] fetchUserSavedPlants: Response OK, but plants data is missing or not an array.', data);
+              setSavedPlantIds(new Set()); // Reset if data format is unexpected
             }
           } else {
-            console.error('Failed to fetch user saved plants:', response.status);
+            let errorMsg = `Failed to fetch user saved plants: ${response.status}`;
+            try {
+                const errorData = await response.json();
+                errorMsg += ` - ${errorData.error || JSON.stringify(errorData)}`;
+            } catch (e) {
+                // If parsing JSON fails, try to get text
+                try {
+                    const textError = await response.text();
+                    errorMsg += ` - ${textError}`;
+                } catch (textEx) {
+                    errorMsg += ` - (Could not retrieve error body)`;
+                }
+            }
+            console.error(`[PlantIdentifierClient] ${errorMsg}`);
+            setSavedPlantIds(new Set()); // Reset on error to reflect accurate state
           }
         } catch (error) {
-          console.error('Error fetching user saved plants:', error);
+          console.error('[PlantIdentifierClient] Network or other error fetching user saved plants:', error);
+          setSavedPlantIds(new Set()); // Reset on network or unexpected errors
         }
       } else if (sessionStatus === 'unauthenticated') {
+        // If user is not authenticated, clear any saved plant IDs.
         setSavedPlantIds(new Set());
       }
+      // If sessionStatus is 'loading', this effect will re-run when it changes.
     };
 
-    if (baseUrl) {
+    // Run fetch function only when baseUrl is available and session status is determined (not 'loading')
+    if (baseUrl && sessionStatus !== 'loading') {
       fetchUserSavedPlants();
     }
-  }, [session, sessionStatus, baseUrl]);
+  }, [session, sessionStatus, baseUrl]); // Dependencies
 
   const fetchCategoryData = async (categorySlug: string) => {
     setLoading(true);
@@ -257,7 +291,7 @@ const PlantIdentifierClient: React.FC<PlantIdentifierClientProps> = ({
                   </div>
                   <hr className="border-t border-gray-300 mb-4" />
                   
-                  {/* --- FIX STARTS HERE --- */}
+                  {/* --- FIX STARTS HERE (User provided filter duplication for modal) --- */}
                   <CollapsibleBox title="Traits" titleClassName="text-gray-400">
                     <div className="flex flex-col space-y-2">
                         <label className="inline-flex items-center"><input type="checkbox" name="trailing" checked={traits.trailing} onChange={handleTraitChange} className="form-checkbox" /><span className="ml-2">Trailing</span></label>
