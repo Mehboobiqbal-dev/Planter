@@ -148,7 +148,7 @@ function Footer() {
                 { label: 'About Us', path: '/about-us' },
                 { label: 'PlantIn App Review', path: '/plantinapp' },
                 { label: 'Ratings and Reviews', path: '/review' },
-                { label: 'Hero of Ukraine', path: '/hero-ukraine' },
+                { label: 'Hero of Ukraine', path: '/' },
                 { label: 'FAQ', path: '/faq' },
                 { label: 'Contact Us', path: '/contact-us' },
                 { label: 'Subscription', path: '/subscription' },
@@ -168,7 +168,7 @@ function Footer() {
             <ul className="space-y-2 text-xs sm:text-sm">
               {[
                 { name: 'Terms of Service', link: '/review' },
-                { name: 'Money Back Policy', link: '/money-back-policy' },
+                { name: 'Money Back Policy', link: '/money-back-guarantee' },
                 { name: 'Subscription Policy', link: '/subscription-policy' },
                 { name: 'Privacy Policy', link: '/do-not-sell' },
                 { name: 'Cookie Settings', link: '/settings' },

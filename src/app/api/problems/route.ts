@@ -1,9 +1,7 @@
-// src/app/api/problems/route.ts
 import { NextResponse } from "next/server";
-import { MongoClient, ObjectId } from "mongodb"; // Import ObjectId
+import { MongoClient } from "mongodb";
 
-// Interface for Problem Categories (from problemCategories collection)
-interface ProblemCategory {
+interface Category {
   name: string;
   slug: string;
   headerImage: string;
@@ -14,65 +12,189 @@ interface ProblemCategory {
   diagnosisSteps: string;
 }
 
-// Interface for items displayed in the list (can be actual problems or transformed plants)
-interface DisplayableProblemItem {
+interface Problem {
   _id: string;
   image: string;
   title: string;
   description: string;
-  category: string; // Category SLUG this item belongs to (e.g., "pests", or for a plant, "cactuses")
+  category: string; // This should be the category SLUG
 }
 
-// Interface for Plant documents from the 'plants' collection
-interface PlantDocument {
-  _id: ObjectId | string; // MongoDB ObjectId or string
-  name: string;
-  category: string; // Plant category NAME (e.g., "Cactuses", "Succulents")
-  image: string;
-  latin?: string;
-  description?: string;
-  slug?: string; // Slug for the plant's own detail page (e.g., "blue-star-fern")
+interface ProblemData {
+  problems: Problem[];
+  categories: Category[];
+  selectedCategory: Category;
 }
 
-// API response structure
-interface ProblemDataResponse {
-  problems: DisplayableProblemItem[];
-  categories: ProblemCategory[]; // List of all problem categories
-  selectedCategory: ProblemCategory; // The currently viewed problem category (e.g., "Weeds")
-}
+/**
+ * @swagger
+ * /api/problems:
+ *   get:
+ *     summary: Retrieve plant problems and categories
+ *     description: Fetches a list of plant problems and categories, optionally filtered by a category slug. If no slug is provided, defaults to 'all-problem'.
+ *     tags:
+ *       - Problems
+ *     parameters:
+ *       - in: query
+ *         name: categorySlug
+ *         schema:
+ *           type: string
+ *           default: all-problem
+ *         description: Slug of the category to filter problems (e.g., 'pests', 'diseases', 'all-problem')
+ *         required: false
+ *         example: pests
+ *     responses:
+ *       200:
+ *         description: Successfully retrieved problems and categories
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 problems:
+ *                   type: array
+ *                   description: List of plant problems, filtered by the selected category
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       _id:
+ *                         type: string
+ *                         description: Unique identifier of the problem
+ *                         example: 507f1f77bcf86cd799439011
+ *                       image:
+ *                         type: string
+ *                         description: URL or path to the problem image
+ *                         example: https://example.com/images/pest.jpg
+ *                       title:
+ *                         type: string
+ *                         description: Title of the problem
+ *                         example: Aphid Infestation
+ *                       description:
+ *                         type: string
+ *                         description: Description of the problem
+ *                         example: Small sap-sucking insects causing leaf curling.
+ *                       category:
+ *                         type: string
+ *                         description: Category SLUG the problem belongs to
+ *                         example: pests
+ *                 categories:
+ *                   type: array
+ *                   description: List of all available problem categories
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       name:
+ *                         type: string
+ *                         description: Name of the category
+ *                         example: Pests
+ *                       slug:
+ *                         type: string
+ *                         description: URL-friendly identifier for the category
+ *                         example: pests
+ *                       headerImage:
+ *                         type: string
+ *                         description: URL or path to the category header image
+ *                         example: https://example.com/images/pests-header.jpg
+ *                       title:
+ *                         type: string
+ *                         description: Title of the category
+ *                         example: Common Pests
+ *                       description:
+ *                         type: string
+ *                         description: Brief description of the category
+ *                         example: Issues caused by insects and other pests.
+ *                       mainDescription:
+ *                         type: string
+ *                         description: Detailed description of the category
+ *                         example: Pests can cause significant damage to plants...
+ *                       commonProblemsDescription:
+ *                         type: string
+ *                         description: Description of common problems in the category
+ *                         example: Common pest issues include aphids and spider mites.
+ *                       diagnosisSteps:
+ *                         type: string
+ *                         description: Steps to diagnose problems in the category
+ *                         example: Inspect leaves and stems for signs of insects...
+ *                 selectedCategory:
+ *                   type: object
+ *                   description: The selected category based on the categorySlug
+ *                   properties:
+ *                     name:
+ *                       type: string
+ *                       description: Name of the category
+ *                       example: Pests
+ *                     slug:
+ *                       type: string
+ *                       description: URL-friendly identifier for the category
+ *                       example: pests
+ *                     headerImage:
+ *                       type: string
+ *                       description: URL or path to the category header image
+ *                       example: https://example.com/images/pests-header.jpg
+ *                     title:
+ *                       type: string
+ *                       description: Title of the category
+ *                       example: Common Pests
+ *                     description:
+ *                       type: string
+ *                       description: Brief description of the category
+ *                       example: Issues caused by insects and other pests.
+ *                     mainDescription:
+ *                       type: string
+ *                       description: Detailed description of the category
+ *                       example: Pests can cause significant damage to plants...
+ *                     commonProblemsDescription:
+ *                       type: string
+ *                       description: Description of common problems in the category
+ *                       example: Common pest issues include aphids and spider mites.
+ *                     diagnosisSteps:
+ *                       type: string
+ *                       description: Steps to diagnose problems in the category
+ *                       example: Inspect leaves and stems for signs of insects...
+ *       404:
+ *         description: Category not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string # Corrected from 'personally identifiable information'
+ *                   example: Category not found
+ *       500:
+ *         description: Server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: Internal server error
+ */
 
-// Target plant category NAMES to display under "Weeds"
-const targetPlantCategoryNames = ['Cactuses', 'Succulents', 'Flowers', 'Ferns', 'Shrubs'];
-
-// Helper function to generate a slug from a name (e.g., "Cactuses" -> "cactuses")
-const generateSlugFromName = (name: string): string => {
-  if (!name) return '';
-  return name.toLowerCase().replace(/\s+/g, '-');
-};
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
-  const categorySlugFromQuery = searchParams.get("categorySlug") || "all-problem";
+  const categorySlug = searchParams.get("categorySlug") || "all-problem";
 
   const uri = process.env.MONGODB_URI;
   if (!uri) {
-    console.error("[API /api/problems] MONGODB_URI is not defined.");
     return NextResponse.json(
-      { error: "Server configuration error: MONGODB_URI is not defined." },
+      { error: "MONGODB_URI is not defined" },
       { status: 500 }
     );
   }
 
   const client = new MongoClient(uri);
-
   try {
     await client.connect();
-    const database = client.db("plantdb"); // Ensure this is your database name
+    const database = client.db("plantdb");
 
-    // 1. Fetch all problem categories (Pests, Diseases, Weeds, etc.)
-    const problemCategoryCollection = database.collection("problemCategories");
-    const problemCategoriesFromDb = await problemCategoryCollection.find({}).toArray();
-    const allProblemCategories: ProblemCategory[] = problemCategoriesFromDb.map((doc: any) => ({
+    // Fetch categories
+    const categoryCollection = database.collection("problemCategories");
+    const categoriesFromDb = await categoryCollection.find({}).toArray();
+    const categories: Category[] = categoriesFromDb.map((doc) => ({
       name: doc.name,
       slug: doc.slug,
       headerImage: doc.headerImage,
@@ -83,82 +205,53 @@ export async function GET(request: Request) {
       diagnosisSteps: doc.diagnosisSteps || '',
     }));
 
-    // 2. Determine the selected problem category based on the query slug
-    let selectedProblemCategory =
-      allProblemCategories.find((cat) => cat.slug === categorySlugFromQuery) ||
-      allProblemCategories.find((cat) => cat.slug === "all-problem"); // Fallback to "all-problem"
+    // Find selected category
+    const selectedCategory =
+      categories.find((cat) => cat.slug === categorySlug) ||
+      categories.find((cat) => cat.slug === "all-problem"); // Default to "all-problem" category if specific slug not found
 
-    if (!selectedProblemCategory) {
-      // This would only happen if categorySlugFromQuery is invalid AND "all-problem" category doesn't exist
-      console.warn(`[API /api/problems] Category slug '${categorySlugFromQuery}' not found, and 'all-problem' fallback failed.`);
+    if (!selectedCategory) {
+      // This case should ideally not be hit if "all-problem" always exists and is a fallback
+      // or if categorySlug is validated against existing slugs.
+      // However, if "all-problem" itself is requested and not found, this is a valid 404.
       return NextResponse.json(
-        { error: `Problem category '${categorySlugFromQuery}' not found.` },
+        { error: `Category with slug '${categorySlug}' not found.` },
         { status: 404 }
       );
     }
 
-    let itemsToList: DisplayableProblemItem[] = [];
+    // Fetch problems
+    const problemCollection = database.collection("problems");
+    const problemsFromDb = await problemCollection.find({}).toArray();
+    const problems: Problem[] = problemsFromDb.map((doc) => ({
+      _id: doc._id.toString(),
+      image: doc.image,
+      title: doc.title,
+      description: doc.description,
+      category: doc.category, // Assumes doc.category stores the category SLUG
+    }));
 
-    // 3. Special handling if the selected problem category is "weeds"
-    if (selectedProblemCategory.slug === "weeds") {
-      console.log("[API /api/problems] Handling special case for 'weeds' category. Fetching specified plants.");
-      const plantCollection = database.collection<PlantDocument>("plants");
-      
-      // Fetch plants from the 'plants' collection that match the target categories
-      const plantsFromDb = await plantCollection.find({
-        category: { $in: targetPlantCategoryNames } // Query by plant category NAME
-      }).limit(50) // Optional: limit the number of plants shown
-        .toArray();
+    // Filter problems by selected category slug
+    // This is the key fix: compare problem.category (slug) with selectedCategory.slug
+    const filteredProblems =
+      selectedCategory.slug === "all-problem"
+        ? problems
+        : problems.filter((problem) => problem.category?.toLowerCase() === selectedCategory.slug.toLowerCase());
 
-      itemsToList = plantsFromDb.map((plantDoc) => ({
-        _id: plantDoc._id.toString(),
-        image: plantDoc.image || 'https://via.placeholder.com/300x200?text=Plant+Image', // Fallback image
-        title: plantDoc.name,
-        description: plantDoc.description || `Learn more about ${plantDoc.name}.`, // Fallback description
-        // 'category' here is the plant's *original* category slug (e.g., "cactuses")
-        // This is used by the frontend's redirection logic for detail pages.
-        category: generateSlugFromName(plantDoc.category), 
-      }));
-      console.log(`[API /api/problems] Fetched ${itemsToList.length} plants for 'weeds' category display.`);
-
-    } else { // Standard handling for "all-problem" or other specific problem categories (Pests, Diseases, etc.)
-      console.log(`[API /api/problems] Handling standard category: '${selectedProblemCategory.slug}'. Fetching actual problems.`);
-      const actualProblemsCollection = database.collection("problems");
-      
-      // Fetch actual problems from the 'problems' collection
-      // The 'category' field in 'problems' collection is assumed to store the problem category SLUG
-      let query = {};
-      if (selectedProblemCategory.slug !== "all-problem") {
-        query = { category: selectedProblemCategory.slug };
-      }
-      
-      const actualProblemsFromDb = await actualProblemsCollection.find(query).toArray();
-      
-      itemsToList = actualProblemsFromDb.map((doc: any) => ({
-        _id: doc._id.toString(),
-        image: doc.image,
-        title: doc.title,
-        description: doc.description,
-        category: doc.category, // This is the problem's own category slug
-      }));
-      console.log(`[API /api/problems] Fetched ${itemsToList.length} actual problems for '${selectedProblemCategory.slug}'.`);
-    }
-
-    const responseData: ProblemDataResponse = {
-      problems: itemsToList,
-      categories: allProblemCategories,
-      selectedCategory: selectedProblemCategory,
+    const response: ProblemData = {
+      problems: filteredProblems,
+      categories,
+      selectedCategory,
     };
 
-    return NextResponse.json(responseData);
-
+    return NextResponse.json(response);
   } catch (error) {
-    console.error("[API /api/problems] Critical error in API route:", error);
-    const errorMessage = error instanceof Error ? error.message : "An unknown internal server error occurred.";
-    return NextResponse.json({ error: `Internal server error: ${errorMessage}` }, { status: 500 });
+    console.error("Error fetching data from MongoDB:", error);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
   } finally {
-    if (client) {
-      await client.close();
-    }
+    await client.close();
   }
 }

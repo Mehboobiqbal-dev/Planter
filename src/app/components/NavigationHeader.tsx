@@ -1,4 +1,3 @@
-// src/components/NavigationHeader.tsx (or your actual path)
 "use client";
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
@@ -29,7 +28,7 @@ const problemCategories = [
   { name: "Diseases", slug: "diseases" },
   { name: "Pests", slug: "pests" },
   { name: "Weeds", slug: "weeds" },
-  { name: "Ask the Botanist", slug: "/ask-the-botanist" },
+  { name: "Ask the Botanist", slug: "ask-the-botanist", isAbsolute: true },
 ];
 
 interface ProblemDisplay {
@@ -41,7 +40,7 @@ const problemDisplay: ProblemDisplay = {
   diseases: "Disease ID",
   pests: "Pest ID",
   weeds: "Weeds ID",
-  "/ask-the-botanist": "Ask the Botanist",
+  "ask-the-botanist": "Ask the Botanist",
 };
 
 const companyCategories = [
@@ -50,7 +49,7 @@ const companyCategories = [
   { name: "About Us", slug: "/about-us" },
   { name: "PlantIn App Review", slug: "/review" },
   { name: "Rating & Reviews", slug: "/" },
-  { name: "Hero of Ukraine", slug: "/hero-of-ukraine" },
+  { name: "Hero of Ukraine", slug: "/" },
   { name: "FAQ", slug: "/faq" },
   { name: "Contact Us", slug: "/contact-us" },
   { name: "Promo", slug: "/promo" },
@@ -59,13 +58,17 @@ const companyCategories = [
 
 const blogCategories = [
   { name: "Plants", slug: "/blog/plants" },
-  { name: "Weeds", slug: "/blog/weeds" },
+  { name: "Weeds", slug: "/problems/weeds" },
 ];
 
 interface Notification {
   _id: string;
   message: string;
   date: string;
+}
+
+function getProblemLink(slug: string, isAbsolute?: boolean): string {
+  return isAbsolute ? `/${slug}` : `/problems/${slug}`;
 }
 
 export function NavigationHeader() {
@@ -84,7 +87,6 @@ export function NavigationHeader() {
     }
   }, []);
 
-
   const toggleDropdown = () => {
     setIsDropdownOpen((prev) => !prev);
   };
@@ -100,11 +102,8 @@ export function NavigationHeader() {
   };
 
   useEffect(() => {
-    // Only fetch if the bar is open, user is authenticated, and session object is available
     if (isMiniBarOpen && status === "authenticated" && session?.user) {
       const fetchSavedPlants = async () => {
-        // Extract userId from session. Adjust if your session structure is different.
-        // Common patterns: session.user.id, session.user._id, session.userId, session.sub
         const userId = (session.user as any)?.id || (session.user as any)?.sub;
 
         if (!userId) {
@@ -114,25 +113,18 @@ export function NavigationHeader() {
         }
 
         try {
-          // Construct URL with userId query parameter
           const url = `/api/plant/saved?userId=${encodeURIComponent(String(userId))}`;
           console.log(`[NavigationHeader] Fetching saved plants from: ${url}`);
 
           const res = await fetch(url, {
             cache: 'no-store',
-            // credentials: 'include', // 'include' is generally for cross-origin with cookies.
-                                    // For same-origin, cookies are usually sent by default by the browser.
-                                    // However, Next.js fetch on server components might behave differently.
-                                    // For client-side fetch to same-origin API routes using App Router,
-                                    // cookies (like the NextAuth session cookie) should be handled automatically.
-                                    // If issues persist, you might add it back, but typically not needed for same-origin.
           });
 
           if (!res.ok) {
             const errorText = await res.text();
             console.error(`[NavigationHeader] Failed to fetch saved plants. Status: ${res.status}. UserID: ${userId}. Response: ${errorText}`);
-            setSavedPlants([]); // Clear on error
-            return; // Important to return here
+            setSavedPlants([]);
+            return;
           }
           const data = await res.json();
           if (data.plants && Array.isArray(data.plants)) {
@@ -148,10 +140,8 @@ export function NavigationHeader() {
         }
       };
       fetchSavedPlants();
-    } else if (!isMiniBarOpen) {
-      // Optionally clear or don't refetch
     }
-  }, [isMiniBarOpen, status, session]); // Add session to dependencies
+  }, [isMiniBarOpen, status, session]);
 
   useEffect(() => {
     if (isNotificationBarOpen && status === "authenticated") {
@@ -196,7 +186,7 @@ export function NavigationHeader() {
 
               {/* Mobile Top Navigation */}
               <div className="lg:hidden flex items-center gap-4">
-                {status === "authenticated" && session?.user ? ( // Added session?.user check
+                {status === "authenticated" && session?.user ? (
                   <>
                     <Link
                       href="/subscription"
@@ -219,7 +209,7 @@ export function NavigationHeader() {
                         className="h-6 w-6"
                       />
                       {savedPlants.length > 0 && (
-                         <span className="absolute top-0 right-0 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center translate-x-1 -translate-y-1">
+                        <span className="absolute top-0 right-0 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center translate-x-1 -translate-y-1">
                           {savedPlants.length}
                         </span>
                       )}
@@ -254,11 +244,11 @@ export function NavigationHeader() {
                     />
                   </>
                 ) : status === "loading" ? (
-                  <div className="flex items-center gap-4"> {/* Placeholder while loading session */}
+                  <div className="flex items-center gap-4">
                     <div className="h-6 w-6 bg-gray-200 rounded-full animate-pulse"></div>
                     <div className="h-8 w-8 bg-gray-200 rounded-full animate-pulse"></div>
                   </div>
-                ) : ( // Unauthenticated
+                ) : (
                   <>
                     <Link
                       href="/authmodel"
@@ -296,7 +286,13 @@ export function NavigationHeader() {
                   </Link>
                   <div className="absolute left-0 top-full hidden group-hover:block bg-white shadow-lg rounded-md z-10 min-w-[200px]">
                     <ul className="py-2">
-                      {problemCategories.map((cat) => (<li key={cat.slug}><Link href={`/problems/${cat.slug}`} className="block px-4 py-2 text-sm hover:bg-gray-100">{problemDisplay[cat.slug] || cat.name}</Link></li>))}
+                      {problemCategories.map((cat) => (
+                        <li key={cat.slug}>
+                          <Link href={getProblemLink(cat.slug, cat.isAbsolute)} className="block px-4 py-2 text-sm hover:bg-gray-100">
+                            {problemDisplay[cat.slug] || cat.name}
+                          </Link>
+                        </li>
+                      ))}
                     </ul>
                   </div>
                 </div>
@@ -327,7 +323,7 @@ export function NavigationHeader() {
 
               {/* Desktop Right Side Actions */}
               <div className="hidden lg:flex items-center gap-3">
-                {status === "authenticated" && session?.user ? ( // Added session?.user check
+                {status === "authenticated" && session?.user ? (
                   <>
                     <Link href="/subscription" className="px-4 py-2 font-semibold rounded-2xl bg-purple-600 text-white flex items-center gap-2 relative">
                       <img src="https://myplantin.com/_next/image?url=https%3A%2F%2Fstrapi.myplantin.com%2Fenvelop_free_82a5a66816.webp&w=96&q=75" alt="Message Icon" className="h-5 w-5 object-contain" />
@@ -377,14 +373,14 @@ export function NavigationHeader() {
                       <button onClick={toggleNotificationBar} className="relative">
                         <svg className="h-6 w-6 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-5-5.917V5a2 2 0 10-4 0v.083A6.002 6.002 0 004 11v3.159c0 .538-.214 1.053-.595 1.436L2 17h5m4 4a3 3 0 01-3-3h6a3 3 0 01-3 3z" /></svg>
                         {notifications.length > 0 && (
-                           <span className="absolute top-0 right-0 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center translate-x-1 -translate-y-1">
+                          <span className="absolute top-0 right-0 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center translate-x-1 -translate-y-1">
                             {notifications.length}
                           </span>
                         )}
                       </button>
                       {isNotificationBarOpen && (
                         <div className="absolute right-0 top-full mt-2 w-80 bg-white shadow-lg rounded-lg border border-gray-200 z-20 max-h-96 overflow-y-auto">
-                           <div className="flex justify-between items-center p-4 border-b">
+                          <div className="flex justify-between items-center p-4 border-b">
                             <h3 className="text-lg font-semibold">Notifications</h3>
                             <button onClick={toggleNotificationBar} className="text-gray-500 hover:text-gray-700">
                               <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
@@ -395,7 +391,7 @@ export function NavigationHeader() {
                               {notifications.map((notification) => (
                                 <li key={notification._id} className="flex items-start px-4 py-3 hover:bg-gray-100 cursor-pointer">
                                   <div className="flex-shrink-0 pt-1">
-                                     <svg className="h-5 w-5 text-teal-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <svg className="h-5 w-5 text-teal-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                                     </svg>
                                   </div>
@@ -407,9 +403,9 @@ export function NavigationHeader() {
                               ))}
                             </ul>
                           ) : (
-                             <p className="px-4 py-4 text-gray-500 text-sm text-center">No recent notifications.</p>
+                            <p className="px-4 py-4 text-gray-500 text-sm text-center">No recent notifications.</p>
                           )}
-                           <div className="p-4 border-t">
+                          <div className="p-4 border-t">
                             <Link href="/notifications" className="block w-full text-center px-4 py-2 bg-teal-500 text-white rounded-full font-medium hover:bg-teal-600" onClick={() => setIsNotificationBarOpen(false)}>View all notifications</Link>
                           </div>
                         </div>
@@ -420,7 +416,13 @@ export function NavigationHeader() {
                       {isDropdownOpen && (
                         <div className="absolute right-0 top-full mt-2 w-56 bg-white shadow-lg rounded-lg border border-gray-200 z-20">
                           <ul className="py-2 text-gray-700">
-                            {[ { href: "/settings", label: "Settings" }, { href: "/community-profile", label: "Community Profile" }, { href: "/my-plants", label: "My Plants" }, { href: "/saved-articles", label: "Saved Articles" }, { href: "/subscription", label: "Get Premium" }, ].map(({ href, label }) => (
+                            {[
+                              { href: "/settings", label: "Settings" },
+                              { href: "/community-profile", label: "Community Profile" },
+                              { href: "/my-plants", label: "My Plants" },
+                              { href: "/saved-articles", label: "Saved Articles" },
+                              { href: "/subscription", label: "Get Premium" },
+                            ].map(({ href, label }) => (
                               <li key={href} className="hover:bg-gray-100">
                                 <button className="w-full text-left px-4 py-2" onClick={async () => { router.push(href); setIsDropdownOpen(false); }}>{label}</button>
                               </li>
@@ -432,7 +434,12 @@ export function NavigationHeader() {
                           <div className="px-4 py-3 border-t">
                             <span className="text-sm font-medium text-gray-700">Follow Us:</span>
                             <div className="flex space-x-3 mt-2">
-                              {[ { href: "https://instagram.com", icon: <FaInstagramSquare />, alt: "Instagram" }, { href: "https://facebook.com", icon: <MdFacebook />, alt: "Facebook" }, { href: "https://pinterest.com", icon: <FaPinterest />, alt: "Pinterest" }, { href: "https://tiktok.com", icon: <AiFillTikTok />, alt: "TikTok" }, ].map(({ href, icon, alt }) => (
+                              {[
+                                { href: "https://instagram.com", icon: <FaInstagramSquare />, alt: "Instagram" },
+                                { href: "https://facebook.com", icon: <MdFacebook />, alt: "Facebook" },
+                                { href: "https://pinterest.com", icon: <FaPinterest />, alt: "Pinterest" },
+                                { href: "https://tiktok.com", icon: <AiFillTikTok />, alt: "TikTok" },
+                              ].map(({ href, icon, alt }) => (
                                 <Link key={href} href={href} target="_blank" rel="noopener noreferrer" onClick={() => setIsDropdownOpen(false)} aria-label={alt} className="text-2xl text-gray-600 hover:text-teal-600">{icon}</Link>
                               ))}
                             </div>
@@ -442,11 +449,11 @@ export function NavigationHeader() {
                     </div>
                   </>
                 ) : status === "loading" ? (
-                    <div className="flex items-center gap-3"> {/* Placeholder while loading session */}
-                       <div className="h-8 w-24 bg-gray-200 rounded-2xl animate-pulse"></div>
-                       <div className="h-8 w-16 bg-gray-200 rounded-2xl animate-pulse"></div>
-                    </div>
-                ) :( // Unauthenticated
+                  <div className="flex items-center gap-3">
+                    <div className="h-8 w-24 bg-gray-200 rounded-2xl animate-pulse"></div>
+                    <div className="h-8 w-16 bg-gray-200 rounded-2xl animate-pulse"></div>
+                  </div>
+                ) : (
                   <>
                     <Link href="/authmodel" className="px-4 py-2 font-semibold rounded-2xl bg-teal-700 text-white items-center gap-2 hidden lg:flex">Sign Up Free</Link>
                     <Link href="/authmodel" className="px-4 py-2 font-medium text-neutral-800 hidden lg:flex">Log In</Link>

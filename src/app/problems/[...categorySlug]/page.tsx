@@ -28,17 +28,17 @@ interface Problem {
 }
 
 const SkeletonProblemDetail: React.FC = () => (
-    <div className="w-full px-[0.5rem] mx-auto xl:max-w-[1320px] lg:max-w-[1140px] max-w-[960px] py-6">
-      <div className="bg-white p-6 rounded-lg shadow-lg">
-        <Skeleton height={256} className="w-full rounded-md mb-4" />
-        <Skeleton height={36} width="70%" className="mb-3" />
-        <Skeleton count={3} height={18} className="mb-1" />
-        <Skeleton height={18} width="80%" className="mb-4" />
-        <Skeleton count={5} height={18} className="mb-1" />
-        <Skeleton height={18} width="90%" />
-      </div>
+  <div className="w-full px-[0.5rem] mx-auto xl:max-w-[1320px] lg:max-w-[1140px] max-w-[960px] py-6">
+    <div className="bg-white p-6 rounded-lg shadow-lg">
+      <Skeleton height={256} className="w-full rounded-md mb-4" />
+      <Skeleton height={36} width="70%" className="mb-3" />
+      <Skeleton count={3} height={18} className="mb-1" />
+      <Skeleton height={18} width="80%" className="mb-4" />
+      <Skeleton count={5} height={18} className="mb-1" />
+      <Skeleton height={18} width="90%" />
     </div>
-  );
+  </div>
+);
 
 const SkeletonPlantProblems: React.FC<{ isDetailView?: boolean }> = ({ isDetailView = false }) => (
   <SkeletonTheme baseColor="#e0e0e0" highlightColor="#f5f5f5">
@@ -56,10 +56,9 @@ const SkeletonPlantProblems: React.FC<{ isDetailView?: boolean }> = ({ isDetailV
           <Skeleton height={48} className="w-full md:w-80" style={{ borderRadius: '30px' }} />
         </div>
         <div className="w-full md:w-1/2">
-            <Skeleton className="h-64 md:h-full w-full" />
+          <Skeleton className="h-64 md:h-full w-full" />
         </div>
       </header>
-
       <nav className="mt-6 pb-2 px-4">
         <ul className="flex space-x-4 overflow-x-auto no-scrollbar">
           {Array.from({ length: 5 }).map((_, index) => (
@@ -69,13 +68,11 @@ const SkeletonPlantProblems: React.FC<{ isDetailView?: boolean }> = ({ isDetailV
           ))}
         </ul>
       </nav>
-
       <div className="w-full px-[0.5rem] mx-auto xl:max-w-[1320px] lg:max-w-[1140px] max-w-[960px] mt-5">
         <div className="pt-1 pb-4 px-4 border border-gray-200 rounded-2xl h-[140px] overflow-hidden">
           <Skeleton count={4} height={18} style={{ marginBottom: '0.5rem' }} />
         </div>
       </div>
-
       {isDetailView ? (
         <SkeletonProblemDetail />
       ) : (
@@ -106,13 +103,18 @@ const SkeletonPlantProblems: React.FC<{ isDetailView?: boolean }> = ({ isDetailV
   </SkeletonTheme>
 );
 
-
 export default function PlantProblems() {
   const params = useParams();
   const router = useRouter();
 
-  const categorySlugFromUrl = Array.isArray(params.categorySlug) ? params.categorySlug[0] : params.categorySlug as string | undefined;
-  const problemIdFromUrl = params.problemId ? (Array.isArray(params.problemId) ? params.problemId[0] : params.problemId as string | undefined) : undefined;
+  const categorySlugFromUrl = Array.isArray(params.categorySlug)
+    ? params.categorySlug[0]
+    : (params.categorySlug as string | undefined);
+  const problemIdFromUrl = params.problemId
+    ? Array.isArray(params.problemId)
+      ? params.problemId[0]
+      : (params.problemId as string | undefined)
+    : undefined;
 
   const [categories, setCategories] = useState<Category[]>([]);
   const [problemList, setProblemList] = useState<Problem[]>([]);
@@ -122,136 +124,138 @@ export default function PlantProblems() {
   const [loading, setLoading] = useState(true);
   const [errorOccurred, setErrorOccurred] = useState(false);
 
-
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
       setErrorOccurred(false);
-      // Reset states more carefully based on view type
-      // setSelectedProblem(null); // Resetting this might cause issues if useEffect depends on selectedProblem.category
-      // setProblemList([]);
 
       try {
         if (problemIdFromUrl) {
           // Detail View
-          setSelectedProblem(null); // Clear previous problem detail
-          setProblemList([]);     // No list in detail view context
+          setSelectedProblem(null);
+          setProblemList([]);
 
           const problemDetailResponse = await fetch(`/api/problem/${problemIdFromUrl}`);
           if (!problemDetailResponse.ok) {
-            throw new Error(`Problem ${problemIdFromUrl} not found or API error`);
+            const errorData = await problemDetailResponse.json().catch(() => ({}));
+            throw new Error(`Problem ${problemIdFromUrl} not found: ${errorData.error || 'Unknown error'}`);
           }
           const problemPayload = await problemDetailResponse.json();
-          const fetchedProblem: Problem = problemPayload.problem;
+          const fetchedProblem: Problem = {
+            _id: problemPayload._id,
+            image: problemPayload.images?.[0] || '/default-image.jpg', // Fallback image
+            title: problemPayload.scientificName || 'Unnamed Problem',
+            description: problemPayload.fullDescription || problemPayload.SignOfDamage || 'No description available',
+            category: problemPayload.category || 'unknown', // Ensure category is present
+          };
 
-          if (!fetchedProblem || !fetchedProblem.category) {
-             throw new Error(`Problem data for ${problemIdFromUrl} is invalid or missing category.`);
+          if (!fetchedProblem.category) {
+            console.warn(`Problem ${problemIdFromUrl} is missing category field`);
+            throw new Error(`Problem data for ${problemIdFromUrl} is missing category`);
           }
-          
+
+          setSelectedProblem(fetchedProblem);
+
           const actualProblemCategorySlug = fetchedProblem.category;
 
-          // If URL category is present, not 'all-problem', and mismatches problem's actual category, redirect.
-          if (categorySlugFromUrl && categorySlugFromUrl !== 'all-problem' && categorySlugFromUrl !== actualProblemCategorySlug) {
+          // Redirect if category slug mismatches and is not 'all-problem'
+          if (
+            categorySlugFromUrl &&
+            categorySlugFromUrl !== 'all-problem' &&
+            categorySlugFromUrl !== actualProblemCategorySlug
+          ) {
+            console.log(
+              `Redirecting from /problems/${categorySlugFromUrl}/${problemIdFromUrl} to /problems/${actualProblemCategorySlug}/${problemIdFromUrl}`
+            );
             router.replace(`/problems/${actualProblemCategorySlug}/${problemIdFromUrl}`);
-            // setLoading(false) will be skipped due to the finally block condition
-            return; 
+            return;
           }
-          
-          setSelectedProblem(fetchedProblem);
-          
-          // Determine context category: if URL is all-problem, use actual problem's cat; else use URL's cat or actual problem's cat.
-          const categoryContextSlug = categorySlugFromUrl === 'all-problem' 
-                                      ? actualProblemCategorySlug 
-                                      : (categorySlugFromUrl || actualProblemCategorySlug);
 
+          const categoryContextSlug =
+            categorySlugFromUrl === 'all-problem' ? actualProblemCategorySlug : (categorySlugFromUrl || actualProblemCategorySlug);
           const categoryContextResponse = await fetch(`/api/problems?categorySlug=${categoryContextSlug}`);
           if (!categoryContextResponse.ok) {
-            throw new Error(`Failed to fetch category context for ${categoryContextSlug}`);
+            const errorData = await categoryContextResponse.json().catch(() => ({}));
+            throw new Error(`Failed to fetch category context for ${categoryContextSlug}: ${errorData.error || 'Unknown error'}`);
           }
           const categoryContextData = await categoryContextResponse.json();
-          setCategories(categoryContextData.categories);
-          setSelectedCategory(categoryContextData.selectedCategory);
-          // problemList remains empty for detail view
-
+          setCategories(categoryContextData.categories || []);
+          setSelectedCategory(categoryContextData.selectedCategory || null);
         } else {
           // List View
-          setSelectedProblem(null); // Ensure no problem is selected
+          setSelectedProblem(null);
 
           const listFetchSlug = categorySlugFromUrl || 'all-problem';
 
-          // If navigating to base /problems, redirect to /problems/all-problem
           if (!categorySlugFromUrl && typeof window !== 'undefined') {
+            console.log('Redirecting to /problems/all-problem');
             router.replace(`/problems/all-problem`);
-            // setLoading(false) will be skipped
             return;
           }
 
           const response = await fetch(`/api/problems?categorySlug=${listFetchSlug}`);
           if (!response.ok) {
-            const errorData = await response.json().catch(() => ({})); // Try to parse error
-            throw new Error(`Failed to fetch problem list for ${listFetchSlug}: ${response.status} ${errorData.error || ''}`);
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(`Failed to fetch problem list for ${listFetchSlug}: ${errorData.error || 'Unknown error'}`);
           }
           const data = await response.json();
-          setProblemList(data.problems);
-          setCategories(data.categories);
-          setSelectedCategory(data.selectedCategory);
+          console.log(`Fetched problems for ${listFetchSlug}:`, data.problems);
+          setProblemList(data.problems || []);
+          setCategories(data.categories || []);
+          setSelectedCategory(data.selectedCategory || null);
         }
-      } catch (error)
-      {
+      } catch (error) {
         console.error('Error fetching data:', error);
         setErrorOccurred(true);
-        // Clear all data states on error
         setSelectedCategory(null);
         setSelectedProblem(null);
         setProblemList([]);
         setCategories([]);
       } finally {
-        // Condition to prevent setting loading to false if a redirect is pending
-        const isRedirectingForProblemCategoryMismatch = 
-            problemIdFromUrl && 
-            categorySlugFromUrl && 
-            categorySlugFromUrl !== 'all-problem' && 
-            selectedProblem?.category && // Check selectedProblem AFTER it's set
-            categorySlugFromUrl !== selectedProblem.category;
+        const isRedirectingForProblemCategoryMismatch =
+          problemIdFromUrl &&
+          categorySlugFromUrl &&
+          categorySlugFromUrl !== 'all-problem' &&
+          selectedProblem?.category &&
+          categorySlugFromUrl !== selectedProblem.category;
 
-        const isRedirectingForBaseProblemsPath = 
-            !categorySlugFromUrl && 
-            problemIdFromUrl === undefined && 
-            typeof window !== 'undefined';
+        const isRedirectingForBaseProblemsPath = !categorySlugFromUrl && problemIdFromUrl === undefined;
 
         if (!isRedirectingForProblemCategoryMismatch && !isRedirectingForBaseProblemsPath) {
-             setLoading(false);
+          setLoading(false);
         }
       }
     };
 
     fetchData();
-  }, [categorySlugFromUrl, problemIdFromUrl, router]); // Removed selectedProblem.category, router.replace should trigger re-render with new params.
-
+  }, [categorySlugFromUrl, problemIdFromUrl, router]);
 
   if (loading) {
     return <SkeletonPlantProblems isDetailView={!!problemIdFromUrl} />;
   }
 
   if (errorOccurred || !selectedCategory) {
-    const messageTitle = problemIdFromUrl ? "Oops! Problem Not Found." : "Oops! Category Not Found.";
-    const messageBody = problemIdFromUrl 
-        ? `We couldn't load the details for this plant problem. It might be invalid or there was an issue fetching the data.`
-        : `We couldn't load the plant problem details for the "${categorySlugFromUrl || 'requested'}" category. This category might not exist.`;
+    const messageTitle = problemIdFromUrl ? 'Oops! Problem Not Found.' : 'Oops! Category Not Found.';
+    const messageBody = problemIdFromUrl
+      ? `We couldn't load the details for this plant problem. It might be invalid or there was an issue fetching the data.`
+      : `We couldn't load the plant problem details for the "${categorySlugFromUrl || 'requested'}" category. This category might not exist.`;
     return (
       <div className="flex flex-col justify-center items-center h-screen text-center p-4 bg-white">
         <p className="text-xl text-gray-700 mb-2">{messageTitle}</p>
         <p className="text-gray-600">{messageBody}</p>
-        <Link href="/problems/all-problem" className="mt-6 px-6 py-3 bg-gradient-to-r from-[#04BF94] to-[#52C8AD] text-white rounded-[30px] hover:shadow-lg font-semibold">
+        <Link
+          href="/problems/all-problem"
+          className="mt-6 px-6 py-3 bg-gradient-to-r from-[#04BF94] to-[#52C8AD] text-white rounded-[30px] hover:shadow-lg font-semibold"
+        >
           View All Problems
         </Link>
       </div>
     );
   }
-  
-  const currentDisplaySlug = selectedCategory.slug; // This is the slug of the category being displayed (could be 'all-problem')
 
+  const currentDisplaySlug = selectedCategory.slug;
   const isAllProblemsView = selectedCategory.slug === 'all-problem';
+
   const getDiagnosisTitle = () => {
     if (selectedCategory.name === 'Pests') return 'How to Identify Pests Problems';
     if (selectedCategory.name === 'Diseases') return 'How to Identify Plant Diseases';
@@ -268,26 +272,31 @@ export default function PlantProblems() {
         <div className="p-6 w-full md:w-1/2">
           <div className="flex-grow flex items-start justify-start text-left">
             <div className="text-sm">
-              <Link href="/" className="text-gray-700 hover:underline">PlantIn</Link>
+              <Link href="/" className="text-gray-700 hover:underline">
+                PlantIn
+              </Link>
               <span className="mx-1 text-gray-700">{'>'}</span>
-              <Link href="/problems/all-problem" className="text-gray-600 hover:underline">Plant Problem</Link>
+              <Link href="/problems/all-problem" className="text-gray-600 hover:underline">
+                Plant Problem
+              </Link>
               {selectedCategory.slug !== 'all-problem' && (
                 <>
                   <span className="mx-1 text-gray-700">{'>'}</span>
-                  <Link href={`/problems/${selectedCategory.slug}`} className="text-gray-600 hover:underline">{selectedCategory.name}</Link>
+                  <Link href={`/problems/${selectedCategory.slug}`} className="text-gray-600 hover:underline">
+                    {selectedCategory.name}
+                  </Link>
                 </>
               )}
               {selectedProblem && (
-                 <>
+                <>
                   <span className="mx-1 text-gray-700">{'>'}</span>
-                  {/* Link to the problem detail page, using its actual category for the URL context */}
-                  <Link 
-                    href={`/problems/${selectedProblem.category}/${selectedProblem._id}`} 
+                  <Link
+                    href={`/problems/${selectedProblem.category}/${selectedProblem._id}`}
                     className="text-gray-500 font-semibold truncate max-w-[150px] inline-block hover:underline"
                   >
                     {selectedProblem.title}
                   </Link>
-                 </>
+                </>
               )}
             </div>
           </div>
@@ -315,13 +324,13 @@ export default function PlantProblems() {
       </header>
       <nav className="mt-6 pb-2 px-4">
         <ul className="flex space-x-4 overflow-x-auto no-scrollbar">
-          {categories.map(cat => (
+          {categories.map((cat) => (
             <li key={cat.slug}>
               <Link
                 href={`/problems/${cat.slug}`}
                 className={`pb-1 whitespace-nowrap font-medium ${
-                  currentDisplaySlug === cat.slug // currentDisplaySlug IS selectedCategory.slug
-                    ? 'text-teal-600 border-b-2 border-teal-500' // Enhanced active style
+                  currentDisplaySlug === cat.slug
+                    ? 'text-teal-600 border-b-2 border-teal-500'
                     : 'text-gray-600 hover:text-teal-600'
                 }`}
               >
@@ -343,7 +352,7 @@ export default function PlantProblems() {
           <button
             onClick={() => setExpanded(!expanded)}
             className="absolute bg-white p-2 text-blue-500 text-xl font-bold bottom-2 left-1/2 -translate-x-1/2 rounded-full border border-blue-500 hover:bg-blue-50 transition-colors"
-            aria-label={expanded ? "Collapse description" : "Expand description"}
+            aria-label={expanded ? 'Collapse description' : 'Expand description'}
           >
             {expanded ? <MdKeyboardArrowUp /> : <IoIosArrowDown />}
           </button>
@@ -357,22 +366,18 @@ export default function PlantProblems() {
                   <div
                     className="text-lg text-gray-700 text-left prose max-w-none"
                     dangerouslySetInnerHTML={{
-                      __html: selectedCategory.commonProblemsDescription || 
-                        'Common problems description not available for this category.'
+                      __html: selectedCategory.commonProblemsDescription || 'Common problems description not available for this category.',
                     }}
                   />
                 </div>
               )}
-              {selectedCategory.diagnosisSteps && !isAllProblemsView && ( // Only show for specific categories, not "All Problems"
+              {selectedCategory.diagnosisSteps && !isAllProblemsView && (
                 <div className="pt-2 mt-4">
-                  <p className="text-left text-2xl font-bold p-2">
-                    {getDiagnosisTitle()}
-                  </p>
+                  <p className="text-left text-2xl font-bold p-2">{getDiagnosisTitle()}</p>
                   <div
                     className="text-lg text-gray-700 text-left prose max-w-none"
                     dangerouslySetInnerHTML={{
-                      __html: selectedCategory.diagnosisSteps || 
-                        'Diagnosis steps not available for this category.'
+                      __html: selectedCategory.diagnosisSteps || 'Diagnosis steps not available for this category.',
                     }}
                   />
                 </div>
@@ -381,14 +386,13 @@ export default function PlantProblems() {
           )}
         </div>
       </div>
-
       {selectedProblem ? (
         <div className="w-full px-[0.5rem] mx-auto xl:max-w-[1320px] lg:max-w-[1140px] max-w-[960px] py-6">
           <article className="bg-white p-4 md:p-6 rounded-lg shadow-lg">
             <p className="text-left text-2xl font-bold p-2 mb-2">Problem Details</p>
-            <div 
-                className="text-lg text-gray-700 text-left prose max-w-none" 
-                dangerouslySetInnerHTML={{ __html: selectedProblem.description }}
+            <div
+              className="text-lg text-gray-700 text-left prose max-w-none"
+              dangerouslySetInnerHTML={{ __html: selectedProblem.description }}
             />
           </article>
         </div>
@@ -404,30 +408,20 @@ export default function PlantProblems() {
           ) : (
             <div className="mx-auto w-full px-4 py-6">
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
-                {problemList.map(item => {
-                  // Determine the correct link for the problem item
-                  // If viewing "All Problems", use the item's actual category slug in the URL
-                  // Otherwise, use the currently selected category's slug
+                {problemList.map((item) => {
                   const problemLink = isAllProblemsView
-                    ? `/problems/${item.category}/${item._id}` // item.category is the problem's specific category slug
-                    : `/problems/${selectedCategory.slug}/${item._id}`; // selectedCategory.slug is the current view's slug
-
+                    ? `/problem/${item._id}`
+                    : `/problem/${item._id}`;
                   return (
-                    <Link 
+                    <Link
                       href={problemLink}
                       key={item._id}
                       className="block bg-white rounded-lg overflow-hidden shadow-md hover:shadow-lg transition-shadow duration-200"
                     >
-                      <div> {/* Removed nested div, Link can be the card itself */}
-                        <img
-                          src={item.image}
-                          alt={item.title}
-                          className="w-full h-40 object-cover"
-                        />
-                        <div className="p-4">
-                          <h2 className="font-bold text-lg mb-1 line-clamp-2">{item.title}</h2>
-                          <p className="text-gray-700 text-sm line-clamp-3">{item.description}</p>
-                        </div>
+                      <img src={item.image} alt={item.title} className="w-full h-40 object-cover" />
+                      <div className="p-4">
+                        <h2 className="font-bold text-lg mb-1 line-clamp-2">{item.title}</h2>
+                        <p className="text-gray-700 text-sm line-clamp-3">{item.description}</p>
                       </div>
                     </Link>
                   );
@@ -438,16 +432,29 @@ export default function PlantProblems() {
         </>
       )}
       <style jsx global>{`
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-        .prose h1, .prose h2, .prose h3, .prose h4, .prose p, .prose ul, .prose ol, .prose blockquote {
-          margin-bottom: 1em; /* Tailwind prose should handle this, but good to have if overriding */
+        .no-scrollbar::-webkit-scrollbar {
+          display: none;
         }
-        .prose ul, .prose ol {
-          padding-left: 1.5em; /* Tailwind prose should handle this */
+        .no-scrollbar {
+          -ms-overflow-style: none;
+          scrollbar-width: none;
+        }
+        .prose h1,
+        .prose h2,
+        .prose h3,
+        .prose h4,
+        .prose p,
+        .prose ul,
+        .prose ol,
+        .prose blockquote {
+          margin-bottom: 1em;
+        }
+        .prose ul,
+        .prose ol {
+          padding-left: 1.5em;
         }
         .prose li > p {
-          margin-bottom: 0.5em; /* Tailwind prose should handle this */
+          margin-bottom: 0.5em;
         }
       `}</style>
     </div>
