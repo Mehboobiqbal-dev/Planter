@@ -369,7 +369,7 @@ export default function PlantProblems() {
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
                 {problemList.map(item => (
                   <Link 
-                    href={`/problems/${currentDisplaySlug}/${item._id}`}
+                    href={`/problem/${item._id}`}
                     key={item._id}
                   >
                     <div className="bg-white rounded-lg overflow-hidden shadow-md hover:shadow-lg transition-shadow duration-200">
