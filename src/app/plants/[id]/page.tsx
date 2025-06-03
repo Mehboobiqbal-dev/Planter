@@ -3,10 +3,13 @@
 
 import React, { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { useSession } from 'next-auth/react'; // Import useSession
+import { useSession } from 'next-auth/react';
 import Skeleton from 'react-loading-skeleton';
 import 'react-loading-skeleton/dist/skeleton.css';
-import { ClipLoader } from 'react-spinners'; // For loading indicator on button
+import { ClipLoader } from 'react-spinners';
+
+// Import React Icons for sharing
+import { FaTwitter, FaFacebookF, FaPinterestP, FaLink } from 'react-icons/fa';
 
 import ImageLightbox from '../../components/ImageLightbox';
 import PlantCareSection from '../../components/PlantCareSection';
@@ -51,10 +54,10 @@ const BookmarkIconSolid = () => (
       d="M6.32 2.577a49.255 49.255 0 0111.36 0c1.497.174 2.57 1.46 2.57 2.93V21a.75.75 0 01-1.085.67L12 18.089l-7.165 3.583A.75.75 0 013.75 21V5.507c0-1.47 1.073-2.756 2.57-2.93zM12 15.75l6 3V5.507c0-.806-.486-1.517-1.29-1.764a47.742 47.742 0 00-9.42 0C6.486 3.99 6 4.701 6 5.507V18.75l6-3z"
       clipRule="evenodd"
     />
-    <path
-      fillRule="evenodd"
-      d="M16.704 9.296a.75.75 0 010 1.06l-5.25 5.25a.75.75 0 01-1.06 0l-2.25-2.25a.75.75 0 111.06-1.06L11 14.94l4.72-4.72a.75.75 0 011.06 0z"
-      clipRule="evenodd"
+    <path // This checkmark path was likely an error in the original, removing if it's not a combined icon for "bookmarked and completed"
+      // fillRule="evenodd"
+      // d="M16.704 9.296a.75.75 0 010 1.06l-5.25 5.25a.75.75 0 01-1.06 0l-2.25-2.25a.75.75 0 111.06-1.06L11 14.94l4.72-4.72a.75.75 0 011.06 0z"
+      // clipRule="evenodd"
     />
   </svg>
 );
@@ -108,11 +111,14 @@ export default function PlantsDetailClientPage() {
   const [isBookmarked, setIsBookmarked] = useState(false);
   const [savingFavorite, setSavingFavorite] = useState(false);
   const [savingBookmark, setSavingBookmark] = useState(false);
-  const [baseUrl, setBaseUrl] = useState('');
+  const [appBaseUrl, setAppBaseUrl] = useState(''); // Renamed from baseUrl to avoid conflict if you have another
+  
+  const [currentUrl, setCurrentUrl] = useState('');
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      setBaseUrl(window.location.origin);
+      setAppBaseUrl(window.location.origin);
+      setCurrentUrl(window.location.href);
     }
   }, []);
 
@@ -129,7 +135,7 @@ export default function PlantsDetailClientPage() {
       setLoading(true);
       setIsLoadingRelatedPlants(true); 
       setError(null);
-      setPlant(null); // Reset plant state before fetching new one
+      setPlant(null); 
       try {
         const detailRes = await fetch(`/api/plants/${idFromParams}`);
         if (!detailRes.ok) {
@@ -142,7 +148,6 @@ export default function PlantsDetailClientPage() {
             try { parsedError = JSON.parse(text); } catch {}
             throw new Error(parsedError.message || detailRes.statusText);
           }
-          // setLoading(false) and setIsLoadingRelatedPlants(false) will be handled by the error state or subsequent useEffect
           return;
         }
         const data: Plant = await detailRes.json();
@@ -150,9 +155,7 @@ export default function PlantsDetailClientPage() {
       } catch (err: any) {
         console.error('fetchPlant error:', err);
         setError(err.message || 'Unexpected error loading plant.');
-        // setLoading(false) and setIsLoadingRelatedPlants(false) will be handled by the error state or subsequent useEffect
       }
-      // setLoading(false) is deferred to the next useEffect that handles dependent fetches
     };
 
     fetchPlant();
@@ -160,23 +163,17 @@ export default function PlantsDetailClientPage() {
 
 
   useEffect(() => {
-    if (!baseUrl) return; 
+    if (!appBaseUrl) return; 
 
-    if (error) { // If an error occurred fetching the plant, stop all loading
+    if (error) { 
         if (loading) setLoading(false);
         if (isLoadingRelatedPlants) setIsLoadingRelatedPlants(false);
         return;
     }
 
     if (!plant || !plant._id) {
-        // If no plant data (e.g., invalid ID not caught by error, or initial state before fetchPlant completes)
-        // and not already in an error state, keep loading states as they are or turn off if appropriate.
-        // If fetchPlant is still running, `loading` will be true. If it completed with no plant, it might turn loading off.
-        if (idFromParams && !error && loading) { // If an ID exists, no error, but plant is null and still "loading"
-            // This implies fetchPlant hasn't set plant yet, or set it to null successfully
-            // We wait for fetchPlant to complete or error out.
-            // If fetchPlant finished and set plant to null (and no error), then other logic handles it.
-        } else { // No ID, or error already handled, or fetchPlant finished setting plant (or not)
+        if (idFromParams && !error && loading) { 
+        } else { 
             if(loading) setLoading(false);
             if(isLoadingRelatedPlants) setIsLoadingRelatedPlants(false);
         }
@@ -188,16 +185,15 @@ export default function PlantsDetailClientPage() {
     }
 
     const fetchInitialStatusAndRelated = async () => {
-        setIsLoadingRelatedPlants(true); // Explicitly set for this operation
+        setIsLoadingRelatedPlants(true);
 
         if (sessionStatus === 'authenticated' && session?.user && plant?._id) {
             const userId = (session.user as any)?.id || (session.user as any)?.sub;
             if (userId) {
                 try {
-                    // Reset favorite/bookmark status for the new plant
                     setIsFavorited(false);
                     setIsBookmarked(false);
-                    const savedRes = await fetch(`${baseUrl}/api/plant/saved?userId=${encodeURIComponent(String(userId))}`);
+                    const savedRes = await fetch(`${appBaseUrl}/api/plant/saved?userId=${encodeURIComponent(String(userId))}`);
                     if (savedRes.ok) {
                         const savedData = await savedRes.json();
                         if (savedData.plants && Array.isArray(savedData.plants)) {
@@ -213,13 +209,12 @@ export default function PlantsDetailClientPage() {
                 }
             }
         } else {
-             // If not authenticated, ensure states are reset
             setIsFavorited(false);
             setIsBookmarked(false);
         }
 
         try {
-            setRelatedPlants([]); // Clear previous related plants
+            setRelatedPlants([]); 
             const relatedUrl = `/api/related?category=${encodeURIComponent(plant.category)}&excludeId=${plant._id}&limit=4`;
             const relatedRes = await fetch(relatedUrl);
             if (relatedRes.ok) {
@@ -238,7 +233,7 @@ export default function PlantsDetailClientPage() {
 
     fetchInitialStatusAndRelated();
 
-  }, [plant, sessionStatus, session, baseUrl, idFromParams, error]); // Added session, idFromParams, error
+  }, [plant, sessionStatus, session, appBaseUrl, idFromParams, error]);
 
   const handleToggleFavorite = async () => {
     if (sessionStatus !== 'authenticated' || !session?.user || !plant) {
@@ -252,7 +247,7 @@ export default function PlantsDetailClientPage() {
     }
 
     setSavingFavorite(true);
-    const endpoint = isFavorited ? `${baseUrl}/api/plant/unsave` : `${baseUrl}/api/plant/save`;
+    const endpoint = isFavorited ? `${appBaseUrl}/api/plant/unsave` : `${appBaseUrl}/api/plant/save`;
     const plantId = plant._id;
 
     try {
@@ -264,8 +259,6 @@ export default function PlantsDetailClientPage() {
 
       if (res.ok) {
         setIsFavorited(!isFavorited);
-        // If bookmark is tied to favorite, update it too
-        // setIsBookmarked(!isBookmarked); // This line was causing issues, handleToggleBookmark manages its own state
       } else {
         const errorData = await res.json();
         alert(`Failed to ${isFavorited ? 'unsave' : 'save'} plant: ${errorData.error || 'Unknown error'}`);
@@ -291,23 +284,20 @@ export default function PlantsDetailClientPage() {
     }
     
     setSavingBookmark(true);
-    // Assuming bookmark uses same/similar mechanism as favorite for this example
-    // Replace with actual bookmark API call if different
-    const endpoint = isBookmarked ? `${baseUrl}/api/plant/unsave` : `${baseUrl}/api/plant/save`; // Example: uses same endpoints
+    const endpoint = isBookmarked ? `${appBaseUrl}/api/plant/unsave` : `${appBaseUrl}/api/plant/save`; 
     const plantId = plant._id;
 
     try {
-      const res = await fetch(endpoint, { // This should be specific bookmark API if different
+      const res = await fetch(endpoint, { 
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: String(userId), plantId }), // Or { userId, plantId, type: 'bookmark' }
+        body: JSON.stringify({ userId: String(userId), plantId }), 
       });
 
       if (res.ok) {
         setIsBookmarked(!isBookmarked);
-         // If favoriting is also tied, update it. For now, assume they are separate actions but can use same API
-        if (isBookmarked === isFavorited) { // if they were in sync
-             setIsFavorited(!isFavorited); // Keep them in sync for this example
+        if (isBookmarked === isFavorited) { 
+             setIsFavorited(!isFavorited);
         }
       } else {
         const errorData = await res.json();
@@ -322,11 +312,31 @@ export default function PlantsDetailClientPage() {
     }
   };
 
+  // --- Share Functionality ---
+  const shareText = plant ? `Check out this ${plant.name} plant!` : 'Check out this plant!';
+  // Use the first available image for sharing, or a default if none.
+  const shareImage = (plant?.images?.[0]?.url || plant?.image || `${appBaseUrl}/images/default-plant-share.jpg`);
+
+  const handleCopyLink = async (urlToCopy: string) => {
+    if (!urlToCopy) {
+        alert('Could not get current URL to copy.');
+        return;
+    }
+    try {
+      await navigator.clipboard.writeText(urlToCopy);
+      alert('Link copied to clipboard!'); // Consider using a more subtle notification/toast
+    } catch (err) {
+      console.error('Failed to copy link: ', err);
+      alert('Failed to copy link. Make sure you are on HTTPS or localhost.');
+    }
+  };
+  // --- End Share Functionality ---
+
 
   if (loading && !plant && !error) { 
     return (
       <div className="bg-white min-h-screen p-4 md:p-6 animate-pulse">
-        {/* Header Skeleton */}
+        {/* Skeleton content... (remains the same) */}
         <div className="mb-6">
           <div className="flex justify-between items-center mb-4 md:mb-0">
             <div>
@@ -341,8 +351,6 @@ export default function PlantsDetailClientPage() {
             <Skeleton width="100%" height={48} className="rounded-[28px]" />
           </div>
         </div>
-
-        {/* Images + Description Skeleton */}
         <div className="flex flex-col md:flex-row gap-6">
           <div className="w-full md:w-1/3 mb-6 md:mb-0">
             <Skeleton height={320} className="rounded-xl" />
@@ -365,7 +373,6 @@ export default function PlantsDetailClientPage() {
               </div>
                <Skeleton height={16} className="mt-4 rounded w-3/4" />
             </div>
-
             <div>
               <Skeleton width={180} height={28} className="mb-4 rounded" />
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-6">
@@ -382,23 +389,26 @@ export default function PlantsDetailClientPage() {
             </div>
           </div>
         </div>
-
         <div className="mt-10">
             <Skeleton width={280} height={28} className="mb-6 rounded"/>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
                 <Skeleton height={280} className="rounded-lg"/>
-                <div className="py-4 px-3 bg-gray-50 rounded-xl">
-                  <div className="flex items-center space-x-3 sm:space-x-4">
-                    <div className="w-[100px] h-[120px] sm:w-[150px] sm:h-[170px]">
-                        <Skeleton height="100%" className="rounded-md"/>
+                 {/* Skeleton for sticky diagnosis + share */}
+                <div className="flex items-start gap-x-4 md:gap-x-6">
+                    <div className="bg-gray-200 rounded-2xl p-5 sm:p-6 flex-1 max-w-md">
+                        <div className="flex items-center gap-x-4 sm:gap-x-5">
+                            <Skeleton circle={false} width={100} height={150} className="sm:w-[140px] sm:h-[200px] shrink-0"/>
+                            <div className="flex-1">
+                                <Skeleton width="80%" height={24} className="mb-2"/>
+                                <Skeleton width="60%" height={20} className="mb-4"/>
+                                <Skeleton width="150px" height={40} className="rounded-full"/>
+                            </div>
+                        </div>
                     </div>
-                    <div className="flex-1">
-                      <Skeleton width="85%" height={20} className="mb-2 rounded" />
-                      <Skeleton count={2} height={14} className="mb-1 rounded" />
-                      <Skeleton width="65%" height={14} className="rounded" />
+                    <div className="flex flex-col items-center space-y-2.5 pt-1 sm:pt-2">
+                        <Skeleton width={50} height={20} className="mb-1"/>
+                        {[...Array(4)].map(i => <Skeleton key={i} circle height={38} width={38} className="mb-1.5"/>)}
                     </div>
-                  </div>
-                  <Skeleton height={40} className="mt-4 rounded-full w-full sm:w-48" />
                 </div>
             </div>
         </div>
@@ -443,7 +453,7 @@ export default function PlantsDetailClientPage() {
     );
   }
 
-  if (!plant && !loading) { // If not loading, no error, but plant is null (e.g. 404 not caught as error string)
+  if (!plant && !loading) { 
     return (
         <div className="flex flex-col justify-center items-center min-h-[calc(100vh-200px)] p-4 md:p-6 text-center">
             <h1 className="text-2xl font-semibold text-gray-700 mb-3">Plant Not Found</h1>
@@ -458,7 +468,6 @@ export default function PlantsDetailClientPage() {
     );
   }
   
-  // Fallback for when plant is null but other conditions didn't catch it. This should ideally not be reached.
   if (!plant) return null;
 
 
@@ -477,7 +486,7 @@ export default function PlantsDetailClientPage() {
 
   return (
     <div className="bg-white min-h-screen p-4 md:p-6">
-      {/* Header */}
+      {/* Header (remains the same) */}
       <div className="mb-6">
         <div className="flex justify-between items-center mb-4 md:mb-0">
           <div>
@@ -491,21 +500,24 @@ export default function PlantsDetailClientPage() {
             <ShareIcon />
           </button>
           <button
-            onClick={() => router.push(`/care-plan/${plant.slug || plant._id}`)}
-            className="hidden md:block bg-emerald-400 text-white px-4 py-2 rounded-full hover:bg-emerald-500"
-          >
-            Get Care Plan
-          </button>
+  onClick={() => {
+    console.log('Navigating to /authmodel');
+    router.push('/subscription');
+  }}
+  className="hidden md:block bg-emerald-400 text-white px-4 py-2 rounded-full hover:bg-emerald-500"
+>
+  Get Care Plan
+</button>
         </div>
         <button
-          onClick={() => router.push(`/care-plan/${plant.slug || plant._id}`)}
+          onClick={() => router.push(`/authmodel`)}
           className="mt-1 w-full bg-teal-500 text-white py-3 rounded-[28px] text-base font-semibold md:hidden"
         >
           View Care Plan
         </button>
       </div>
 
-      {/* Images + Description */}
+      {/* Images + Description (remains the same) */}
       <div className="flex flex-col md:flex-row gap-6">
         {/* Images */}
         <div className="w-full md:w-1/3 mb-6 md:mb-0">
@@ -583,7 +595,7 @@ export default function PlantsDetailClientPage() {
           )}
         </div>
 
-        {/* Text + Care Requirements */}
+        {/* Text + Care Requirements (remains the same) */}
         <div className="w-full md:w-2/3 flex flex-col gap-y-6">
           <div>
             <div className="flex justify-between items-center mb-2 md:mb-4">
@@ -689,27 +701,85 @@ export default function PlantsDetailClientPage() {
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
             <PlantCareSection plant={plant} careSections={plant.careSections} />
-            <div className="sticky top-24 py-4 px-3 bg-blue-50 rounded-xl shadow-lg">
-              <div className="flex items-center space-x-3 sm:space-x-4">
-                <img
-                  src="https://myplantin.com/_next/image?url=https%3A%2F%2Fstrapi.myplantin.com%2Fbanner_disease_diagnosis_ac2a80a8a8.webp&w=384&q=75"
-                  alt="Plant health check"
-                  className="w-[100px] h-[120px] sm:w-[150px] sm:h-[170px] object-contain rounded-md"
-                  loading="lazy"
-                />
-                <div className="flex-1">
-                  <h3 className="text-md sm:text-lg font-semibold text-gray-900">Plant Disease Diagnosis</h3>
-                  <p className="text-gray-600 text-sm sm:text-base mt-1">
-                    Worried about your plant? Let’s check its health.
-                  </p>
+            
+            {/* Sticky Diagnosis Component with Share Icons */}
+            <div className="sticky top-24">
+              <div className="flex items-start gap-x-3 sm:gap-x-4 md:gap-x-5"> {/* Adjusted gap */}
+                {/* Content Block */}
+                <div className="bg-[#E9ECF7] rounded-2xl shadow-lg p-4 sm:p-5 flex-1 max-w-md min-w-0"> {/* Added min-w-0 for flex shrink issues */}
+                  <div className="flex items-center gap-x-3 sm:gap-x-4">
+                    <img
+                      // IMPORTANT: Replace this src with the actual path to your plant illustration image
+                      // that matches the style in your provided screenshot (potted plant with disease spot).
+                      src="https://myplantin.com/_next/image?url=https%3A%2F%2Fstrapi.myplantin.com%2Fbanner_disease_diagnosis_ac2a80a8a8.webp&w=384&q=75" 
+                      alt="Plant with disease symptoms"
+                      className="w-[80px] h-[120px] sm:w-[100px] sm:h-[150px] md:w-[120px] md:h-[170px] object-contain shrink-0 self-start -ml-1 sm:-ml-2" // Adjusted size and negative margin
+                      onError={(e) => (e.currentTarget.style.display = 'none')} // Hide if image fails to load
+                    />
+                    <div className="flex-1 min-w-0"> {/* Added min-w-0 for text truncation if needed */}
+                      <h3 className="text-lg sm:text-xl font-bold text-black leading-tight">
+                        Disease diagnosis
+                      </h3>
+                      <p className="text-gray-700 text-sm sm:text-base mt-1 mb-3 sm:mb-4">
+                        Check your plant's health
+                      </p>
+                      <button
+                        onClick={() =>
+                          router.push(`/identify/${plant.slug || plant._id}/diagnose`)
+                        }
+                        className="px-4 py-2 sm:px-5 sm:py-2.5 text-sm sm:text-base border-2 border-[#30A85F] text-[#30A85F] rounded-full hover:bg-[#30A85F]/10 transition-colors font-semibold whitespace-nowrap"
+                      >
+                        Diagnose my Plant
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Share Icons Column */}
+               <div className="flex flex-col items-center space-y-2 pt-1">
+  <p className="text-sm sm:text-base font-semibold text-[#707070] mb-0.5 sm:mb-1">Share</p>
+
+  <a 
+    href={`https://twitter.com/intent/tweet?url=${encodeURIComponent(currentUrl)}&text=${encodeURIComponent(shareText)}`} 
+    target="_blank" 
+    rel="noopener noreferrer" 
+    className="block p-2 sm:p-2.5 bg-[#E5E5E5] rounded-full hover:bg-[#D4D4D4] transition-colors"
+    title="Share on Twitter"
+  >
+    <FaTwitter className="text-[#707070] w-4 h-4 sm:w-5 sm:h-5" />
+  </a>
+
+  <a 
+    href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(currentUrl)}`} 
+    target="_blank" 
+    rel="noopener noreferrer" 
+    className="block p-2 sm:p-2.5 bg-[#E5E5E5] rounded-full hover:bg-[#D4D4D4] transition-colors"
+    title="Share on Facebook"
+  >
+    <FaFacebookF className="text-[#707070] w-4 h-4 sm:w-5 sm:h-5" />
+  </a>
+
+  <a 
+    href={`https://pinterest.com/pin/create/button/?url=${encodeURIComponent(currentUrl)}&media=${encodeURIComponent(shareImage)}&description=${encodeURIComponent(shareText)}`} 
+    target="_blank" 
+    rel="noopener noreferrer" 
+    className="block p-2 sm:p-2.5 bg-[#E5E5E5] rounded-full hover:bg-[#D4D4D4] transition-colors"
+    title="Pin on Pinterest"
+  >
+    <FaPinterestP className="text-[#707070] w-4 h-4 sm:w-5 sm:h-5" />
+  </a>
+
+  <button 
+    onClick={() => handleCopyLink(currentUrl)} 
+    className="block p-2 sm:p-2.5 bg-[#E5E5E5] rounded-full hover:bg-[#D4D4D4] transition-colors" 
+    title="Copy link"
+  >
+    <FaLink className="text-[#707070] w-4 h-4 sm:w-5 sm:h-5" />
+  </button>
+
+
                 </div>
               </div>
-              <button
-                onClick={() => router.push(`/identify/${plant.slug || plant._id}/diagnose`)}
-                className="mt-4 w-full sm:w-auto px-5 py-2.5 border border-emerald-500 text-emerald-500 rounded-full hover:bg-emerald-50 transition-colors font-medium"
-              >
-                Diagnose My Plant
-              </button>
             </div>
           </div>
         </div>

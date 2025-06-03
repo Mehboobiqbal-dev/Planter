@@ -129,7 +129,7 @@ function Footer() {
                 { label: 'Plant Problems', path: '/problems' },
                 { label: 'Blog', path: '/blog' },
                 { label: 'Ask the Botanist', path: '/ask-the-botanist' },
-                { label: 'Weed Community', path: '/weed-community' },
+                { label: 'Weed Community', path: '/problems/weeds' },
               ].map(item => (
                 <li key={item.label}>
                   <a href={item.path} className="hover:underline hover:text-green-600">
@@ -167,11 +167,11 @@ function Footer() {
             <h3 className="font-semibold text-sm sm:text-base">Terms and Conditions</h3>
             <ul className="space-y-2 text-xs sm:text-sm">
               {[
-                { name: 'Terms of Service', link: '/terms-of-service' },
+                { name: 'Terms of Service', link: '/review' },
                 { name: 'Money Back Policy', link: '/money-back-policy' },
                 { name: 'Subscription Policy', link: '/subscription-policy' },
-                { name: 'Privacy Policy', link: '/privacy-policy' },
-                { name: 'Cookie Settings', link: '/cookie-settings' },
+                { name: 'Privacy Policy', link: '/do-not-sell' },
+                { name: 'Cookie Settings', link: '/settings' },
                 { name: 'Do Not Sell My Personal Data', link: '/do-not-sell' },
               ].map(item => (
                 <li key={item.name}>

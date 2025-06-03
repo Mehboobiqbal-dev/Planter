@@ -4,24 +4,22 @@ import React from 'react';
 import { useRouter } from 'next/navigation';
 import { Plant } from '../../../types/plant'; // Adjust the path if needed
 
-// Updated props: added loading?
 export interface RelatedPlantsProps {
   related: Plant[];
   currentPlantId: string;
-  loading?: boolean; // Add loading state prop
+  loading?: boolean;
 }
 
 const RelatedPlants: React.FC<RelatedPlantsProps> = ({ related, currentPlantId, loading }) => {
   const router = useRouter();
 
-  // If not loading and no related plants, render nothing.
-  // This check is moved up to handle the non-loading empty state clearly.
+  // If not loading and no related plants, render nothing
   if (!loading && (!related || related.length === 0)) {
     return null;
   }
 
   const SkeletonCard: React.FC = () => (
-    <div className="min-w-[200px] w-[200px] sm:min-w-0 sm:w-auto flex-none sm:flex-auto bg-white rounded-lg shadow-md">
+    <div className="min-w-[200px] w-[200px] sm:w-full bg-white rounded-lg shadow-md">
       <div className="w-full h-40 bg-gray-300 animate-pulse rounded-t-lg"></div>
       <div className="p-4">
         <div className="h-6 bg-gray-300 rounded w-3/4 mb-3 animate-pulse"></div>
@@ -30,23 +28,25 @@ const RelatedPlants: React.FC<RelatedPlantsProps> = ({ related, currentPlantId, 
     </div>
   );
 
+  // Limit related plants to 4 to ensure total of 5 cards (4 plants + 1 Discover all)
+  const displayedPlants = related ? related.slice(0, 4) : [];
+
   return (
     <section className="mt-10 max-w-7xl mx-auto px-4">
       <h2 className="text-2xl font-bold text-gray-900 mb-6">Related Plants</h2>
-      <div className="flex space-x-4 overflow-x-auto pb-4 sm:grid sm:grid-cols-2 md:grid-cols-4 sm:space-x-0 sm:gap-6">
+      <div className="flex space-x-4 overflow-x-auto pb-4 sm:grid sm:grid-cols-2 md:grid-cols-5 sm:space-x-0 sm:gap-6">
         {loading ? (
           <>
-            {[...Array(4)].map((_, index) => (
+            {[...Array(5)].map((_, index) => (
               <SkeletonCard key={`skeleton-${index}`} />
             ))}
           </>
         ) : (
           <>
-            {/* Render actual related plants if not loading and related array is not empty */}
-            {related && related.map((plant) => (
+            {displayedPlants.map((plant) => (
               <div
                 key={plant._id}
-                className="min-w-[200px] w-[200px] sm:min-w-0 sm:w-auto flex-none sm:flex-auto bg-white rounded-lg shadow-md cursor-pointer hover:shadow-lg transition-shadow"
+                className="min-w-[200px] w-[200px] sm:w-full bg-white rounded-lg shadow-md cursor-pointer hover:shadow-lg transition-shadow"
                 onClick={() => router.push(`/plants/${plant.slug || plant._id}`)}
               >
                 <img
@@ -55,8 +55,8 @@ const RelatedPlants: React.FC<RelatedPlantsProps> = ({ related, currentPlantId, 
                   className="w-full h-40 object-cover rounded-t-lg"
                   loading="lazy"
                   onError={(e) => {
-                    ;(e.target as HTMLImageElement).src = '/images/default-plant.jpg'
-                    ;(e.target as HTMLImageElement).alt = 'Error loading image'
+                    (e.target as HTMLImageElement).src = '/images/default-plant.jpg';
+                    (e.target as HTMLImageElement).alt = 'Error loading image';
                   }}
                 />
                 <div className="p-4">
@@ -76,9 +76,9 @@ const RelatedPlants: React.FC<RelatedPlantsProps> = ({ related, currentPlantId, 
               </div>
             ))}
 
-            {/* If fewer than 4 items and not loading, show a “Discover all” card */}
-            {related && related.length < 4 && (
-              <div className="min-w-[200px] w-[200px] sm:min-w-0 sm:w-auto flex-none sm:flex-auto bg-white rounded-2xl border border-gray-200 shadow-sm p-6 flex flex-col items-center justify-center">
+            {/* Always show "Discover all" as the fifth card if there are 1-4 plants */}
+            {displayedPlants.length > 0 && (
+              <div className="min-w-[200px] w-[200px] sm:w-full bg-white rounded-2xl border border-gray-200 shadow-sm p-6 flex flex-col items-center justify-center">
                 <img
                   src="https://strapi.myplantin.com/twig_e3ab677a36.webp"
                   alt="Branch icon"

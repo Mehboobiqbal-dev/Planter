@@ -47,7 +47,7 @@ const PlantCareSection: React.FC<PlantCareSectionProps> = ({ plant, careSections
           <img src="/attachments/poCvCp3zCDyLSNcu2tSXT.png" alt="PlantIn Care System" className="mx-auto my-4" />
           <p className="text-gray-700">Ease your plant care routine with PlantIn's personalized system.</p>
           <button
-            onClick={() => router.push(`/care-plan/${plant?._id}`)}
+            onClick={() => router.push(`/subscription`)}
             className="mt-3 px-4 py-2 bg-green-600 text-white rounded-lg"
           >
             Get Care Plan
@@ -72,7 +72,7 @@ const PlantCareSection: React.FC<PlantCareSectionProps> = ({ plant, careSections
         Ease your plant care routine with PlantIn's personalized system.
       </p>
       <button
-        onClick={() => router.push(`/care-plan/${plant?._id}`)}
+        onClick={() => router.push(`/subscription`)}
         className="px-6 py-2 bg-emerald-500 text-white rounded-full shadow hover:bg-emerald-600"
       >
         Get Care Plan
