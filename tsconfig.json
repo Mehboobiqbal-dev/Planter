@@ -1,27 +1,35 @@
 {
   "compilerOptions": {
-    "target": "ES2017",
+    "target": "ES2017", // This is generally fine. "esnext" is also common.
     "lib": ["dom", "dom.iterable", "esnext"],
     "allowJs": true,
     "skipLibCheck": true,
-    "strict": true,
-    "noEmit": true,
+    "strict": true, // Good! Keep this.
+    "noEmit": true, // Correct for Next.js
     "esModuleInterop": true,
-    "module": "esnext",
-    "moduleResolution": "bundler",
+    "module": "esnext", // Correct for Next.js
+    "moduleResolution": "bundler", // Good for modern Next.js/Node.js ESM support
     "resolveJsonModule": true,
     "isolatedModules": true,
-    "jsx": "preserve",
+    "jsx": "preserve", // Correct for Next.js
     "incremental": true,
     "plugins": [
       {
-        "name": "next"
+        "name": "next" // Crucial for Next.js type checking
       }
     ],
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"] // Make sure your source code (app, components, lib, etc.) is indeed inside a 'src' folder.
+                         // If not, adjust this. e.g., if 'app' is at root, it might be "@/*": ["./*"] or more specific paths.
     }
   },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", "insertArticlesData.js", "src/app/models/article.js"],
-  "exclude": ["node_modules"]
+  "include": [
+    "next-env.d.ts",   // Standard Next.js type definitions
+    "**/*.ts",         // Include all .ts files in your project
+    "**/*.tsx",        // Include all .tsx files in your project
+    ".next/types/**/*.ts" // ESSENTIAL for Next.js's generated types for App Router, etc.
+, "next.config.js"    // "insertArticlesData.js", // Removed from explicit include
+    // "src/app/models/article.js" // Removed from explicit include
+  ],
+  "exclude": ["node_modules"] // Standard
 }

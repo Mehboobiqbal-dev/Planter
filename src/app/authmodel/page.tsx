@@ -565,7 +565,7 @@ const AuthModalPage: React.FC = () => {
 
       {/* Right Promo Panel (Desktop Only) */}
       <div
-        className="hidden md:flex md:w-1/2 flex-col justify-center items-center space-y-6 min-h-screen px-12 bg-teal-300 text-center"
+        className="hidden md:flex md:w-1/2 flex-col justify-center items-center space-y-6 min-h-screen px-12 bg-green-100 text-center"
         style={{
           backgroundImage: `url('https://strapi.myplantin.com/Sign_up_Illustration_6a13a81c32.webp')`,
           backgroundSize: 'cover',
