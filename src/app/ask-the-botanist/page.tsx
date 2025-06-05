@@ -64,7 +64,7 @@ const AskTheBotanist: React.FC = () => {
             <img
               src="https://myplantin.com/_next/image?url=https%3A%2F%2Fstrapi.myplantin.com%2FAsk_the_bo_89a31442d3.webp%3Fupdated_at%3D2022-09-30T07%3A57%3A55.562Z&w=3840&q=75"
               alt="Ask the Botanist Illustration"
-              className="w-full h-full object-cover"
+              className="object-cover"
             />
           </div>
         </header>

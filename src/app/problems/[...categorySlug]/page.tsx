@@ -25,6 +25,7 @@ interface Problem {
   title: string;
   description: string;
   category: string; // Category slug
+  plantSlug?: string; // For plants in "weeds" category
 }
 
 const SkeletonProblemDetail: React.FC = () => (
@@ -128,13 +129,14 @@ export default function PlantProblems() {
     const fetchData = async () => {
       setLoading(true);
       setErrorOccurred(false);
+      setProblemList([]);
+      setCategories([]);
+      setSelectedCategory(null);
+      setSelectedProblem(null);
 
       try {
-        if (problemIdFromUrl) {
-          // Detail View
-          setSelectedProblem(null);
-          setProblemList([]);
-
+        if (problemIdFromUrl && !problemIdFromUrl.startsWith('plant--')) {
+          // Detail View for a problem
           const problemDetailResponse = await fetch(`/api/problem/${problemIdFromUrl}`);
           if (!problemDetailResponse.ok) {
             const errorData = await problemDetailResponse.json().catch(() => ({}));
@@ -143,10 +145,11 @@ export default function PlantProblems() {
           const problemPayload = await problemDetailResponse.json();
           const fetchedProblem: Problem = {
             _id: problemPayload._id,
-            image: problemPayload.images?.[0] || '/default-image.jpg', // Fallback image
+            image: problemPayload.images?.[0] || '/default-image.jpg',
             title: problemPayload.scientificName || 'Unnamed Problem',
             description: problemPayload.fullDescription || problemPayload.SignOfDamage || 'No description available',
-            category: problemPayload.category || 'unknown', // Ensure category is present
+            category: problemPayload.category || 'unknown',
+            plantSlug: problemPayload.plantSlug, // Optional, for weeds
           };
 
           if (!fetchedProblem.category) {
@@ -182,9 +185,7 @@ export default function PlantProblems() {
           setCategories(categoryContextData.categories || []);
           setSelectedCategory(categoryContextData.selectedCategory || null);
         } else {
-          // List View
-          setSelectedProblem(null);
-
+          // List View or plant detail redirect
           const listFetchSlug = categorySlugFromUrl || 'all-problem';
 
           if (!categorySlugFromUrl && typeof window !== 'undefined') {
@@ -203,6 +204,16 @@ export default function PlantProblems() {
           setProblemList(data.problems || []);
           setCategories(data.categories || []);
           setSelectedCategory(data.selectedCategory || null);
+
+          // Handle plant detail redirect for weeds
+          if (problemIdFromUrl?.startsWith('plant--')) {
+            const plantSlug = data.problems.find((p: Problem) => p._id === problemIdFromUrl)?.plantSlug;
+            if (plantSlug) {
+              console.log(`Redirecting to /plants/${plantSlug} for plant ID ${problemIdFromUrl}`);
+              router.replace(`/plants/${plantSlug}`);
+              return;
+            }
+          }
         }
       } catch (error) {
         console.error('Error fetching data:', error);
@@ -214,14 +225,16 @@ export default function PlantProblems() {
       } finally {
         const isRedirectingForProblemCategoryMismatch =
           problemIdFromUrl &&
+          !problemIdFromUrl.startsWith('plant--') &&
           categorySlugFromUrl &&
           categorySlugFromUrl !== 'all-problem' &&
           selectedProblem?.category &&
           categorySlugFromUrl !== selectedProblem.category;
 
         const isRedirectingForBaseProblemsPath = !categorySlugFromUrl && problemIdFromUrl === undefined;
+        const isRedirectingForPlant = problemIdFromUrl?.startsWith('plant--');
 
-        if (!isRedirectingForProblemCategoryMismatch && !isRedirectingForBaseProblemsPath) {
+        if (!isRedirectingForProblemCategoryMismatch && !isRedirectingForBaseProblemsPath && !isRedirectingForPlant) {
           setLoading(false);
         }
       }
@@ -231,7 +244,7 @@ export default function PlantProblems() {
   }, [categorySlugFromUrl, problemIdFromUrl, router]);
 
   if (loading) {
-    return <SkeletonPlantProblems isDetailView={!!problemIdFromUrl} />;
+    return <SkeletonPlantProblems isDetailView={!!problemIdFromUrl && !problemIdFromUrl.startsWith('plant--')} />;
   }
 
   if (errorOccurred || !selectedCategory) {
@@ -291,7 +304,11 @@ export default function PlantProblems() {
                 <>
                   <span className="mx-1 text-gray-700">{'>'}</span>
                   <Link
-                    href={`/problems/${selectedProblem.category}/${selectedProblem._id}`}
+                    href={
+                      selectedProblem.plantSlug
+                        ? `/plants/${selectedProblem.plantSlug}`
+                        : `/problems/${selectedProblem.category}/${selectedProblem._id}`
+                    }
                     className="text-gray-500 font-semibold truncate max-w-[150px] inline-block hover:underline"
                   >
                     {selectedProblem.title}
@@ -349,13 +366,15 @@ export default function PlantProblems() {
           <div className={`text-gray-700 ${expanded ? '' : 'line-clamp-5'}`}>
             {selectedCategory.mainDescription}
           </div>
-          <button
-            onClick={() => setExpanded(!expanded)}
-            className="absolute bg-white p-2 text-blue-500 text-xl font-bold bottom-2 left-1/2 -translate-x-1/2 rounded-full border border-blue-500 hover:bg-blue-50 transition-colors"
-            aria-label={expanded ? 'Collapse description' : 'Expand description'}
-          >
-            {expanded ? <MdKeyboardArrowUp /> : <IoIosArrowDown />}
-          </button>
+          {selectedCategory.mainDescription && selectedCategory.mainDescription.length > 200 && (
+            <button
+              onClick={() => setExpanded(!expanded)}
+              className="absolute bg-white p-2 text-blue-500 text-xl font-bold bottom-2 left-1/2 -translate-x-1/2 rounded-full border border-blue-500 hover:bg-blue-50 transition-colors"
+              aria-label={expanded ? 'Collapse description' : 'Expand description'}
+            >
+              {expanded ? <MdKeyboardArrowUp /> : <IoIosArrowDown />}
+            </button>
+          )}
           {expanded && (
             <div className="mt-4 pt-4 border-t border-gray-200">
               {(isAllProblemsView || selectedCategory.commonProblemsDescription) && (
@@ -409,12 +428,13 @@ export default function PlantProblems() {
             <div className="mx-auto w-full px-4 py-6">
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
                 {problemList.map((item) => {
-                  const problemLink = isAllProblemsView
-                    ? `/problem/${item._id}`
-                    : `/problem/${item._id}`;
+                  const linkHref = item.plantSlug
+                    ? `/plants/${item.plantSlug}`
+                    : `/problems/${selectedCategory.slug === 'all-problem' && item.category ? item.category : selectedCategory.slug}/${item._id}`;
+                  console.log(`Generating link for ${item.title}: ${linkHref} (plantSlug: ${item.plantSlug}, category: ${item.category})`);
                   return (
                     <Link
-                      href={problemLink}
+                      href={linkHref}
                       key={item._id}
                       className="block bg-white rounded-lg overflow-hidden shadow-md hover:shadow-lg transition-shadow duration-200"
                     >

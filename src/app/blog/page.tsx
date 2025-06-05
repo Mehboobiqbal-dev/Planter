@@ -148,7 +148,7 @@ const Blog = () => {
           <img
             src="https://myplantin.com/decorations/decoration-7.svg"
             alt="Illustration showing garden decoration"
-            className="w-full h-full object-cover"
+            className="object-cover"
           />
         </div>
       </header>
@@ -196,7 +196,7 @@ const Blog = () => {
                     <img
                       src={featured[0].image}
                       alt={featured[0].title}
-                      className="w-full h-full object-cover"
+                      className="object-cover"
                     />
                     <div className="absolute top-3 left-3 flex gap-2 flex-wrap">
                       {featured[0].tags.map((tag, i) => (
@@ -232,7 +232,7 @@ const Blog = () => {
                       <img
                         src={art.image}
                         alt={art.title}
-                        className="w-full h-full object-cover"
+                        className="object-cover"
                       />
                     </div>
                     <div className="p-4 w-2/3 flex flex-col justify-between">
