@@ -22,7 +22,7 @@ export default function Settings() {
   const [fullName, setFullName] = useState("");
   const [newEmail, setNewEmail] = useState("");
   const [avatar, setAvatar] = useState("");
-  const [newPassword, setNewPassword] = useState("");
+  const [newPassword, setNewPassword] = useState(""); // This seems to be a temporary field before opening modal
   const [plantCareReminders, setPlantCareReminders] = useState(false);
   const [newArticlesNotifications, setNewArticlesNotifications] = useState(false);
   const [error, setError] = useState("");
@@ -34,7 +34,7 @@ export default function Settings() {
   const [modalOldPassword, setModalOldPassword] = useState("");
   const [modalNewPassword, setModalNewPassword] = useState("");
   const [modalConfirmPassword, setModalConfirmPassword] = useState("");
-  const [activeTab, setActiveTab] = useState("account"); // State to toggle between tabs
+  const [activeTab, setActiveTab] = useState("account");
 
   const fetchUserData = useCallback(async (email: string) => {
     setIsLoading(true);
@@ -49,7 +49,7 @@ export default function Settings() {
       if (data.user) {
         setUser(data.user);
         setFullName(data.user.fullName || data.user.name || "");
-        setNewEmail(data.user.email || "");
+        setNewEmail(data.user.email || ""); // Initialize newEmail with current email
         setAvatar(data.user.avatar || "");
         setPlantCareReminders(data.user.plantCareReminders || false);
         setNewArticlesNotifications(data.user.newArticlesNotifications || false);
@@ -67,26 +67,25 @@ export default function Settings() {
   useEffect(() => {
     if (status === "loading") return;
     if (status === "unauthenticated") {
-      console.log("Redirecting to /auth due to unauthenticated status");
       router.replace("/auth");
       return;
     }
     if (session?.user?.email) {
-      console.log("Fetching user data for email:", session.user.email);
       fetchUserData(session.user.email);
     }
   }, [status, session?.user?.email, fetchUserData, router]);
 
   if (status === "loading" || isLoading) {
-    return <div className="p-8">Loading your settings…</div>;
+    return <div className="p-4 md:p-8">Loading your settings…</div>;
   }
 
   if (status === "unauthenticated") {
-    return <div className="p-8">Please sign in to access settings</div>;
+    // This case should be handled by useEffect redirect, but as a fallback:
+    return <div className="p-4 md:p-8">Please sign in to access settings</div>;
   }
 
   if (!user) {
-    return <div className="p-8">Error loading user data: {error}</div>;
+    return <div className="p-4 md:p-8">Error loading user data: {error}</div>;
   }
 
   const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -214,6 +213,7 @@ export default function Settings() {
         setModalOldPassword("");
         setModalNewPassword("");
         setModalConfirmPassword("");
+        setNewPassword(""); // Clear the temporary field on main page as well
         setShowPasswordModal(false);
       } else {
         setError(data.error || "Failed to update password");
@@ -272,7 +272,6 @@ export default function Settings() {
     }
   };
 
-  // Subscription plans data from the image
   const subscriptionPlans = [
     { title: "90 DAYS ACCESS + 3-DAY TRIAL", price: "59.995", renewable: true },
     { title: "7 DAYS ACCESS + 3-DAY TRIAL", price: "9.995", renewable: true },
@@ -280,21 +279,21 @@ export default function Settings() {
   ];
 
   const handleGetTrial = (planTitle: string) => {
-    // Add logic for handling trial subscription (e.g., API call to subscribe)
     console.log(`Initiating trial for: ${planTitle}`);
-    setSuccess(`Trial initiated for ${planTitle}`);
+    setSuccess(`Trial initiated for ${planTitle}. (Demo)`);
   };
 
   return (
-    <div className="flex min-h-screen bg-white">
-      <div className="w-64 bg-white shadow-md">
-        <div className="p-6">
+    <div className="flex flex-col md:flex-row min-h-screen bg-white">
+      {/* Sidebar */}
+      <div className="w-full md:w-64 bg-white shadow-md md:border-r md:border-gray-200">
+        <div className="p-4 md:p-6">
           <h2 className="text-xl font-bold mb-6">Settings</h2>
           <ul>
             <li className="mb-4">
               <button
                 className={`w-full text-left px-4 py-2 rounded-lg font-semibold ${
-                  activeTab === "account" ? "bg-blue-100" : "hover:bg-gray-100"
+                  activeTab === "account" ? "bg-blue-100 text-blue-600" : "hover:bg-gray-100"
                 }`}
                 onClick={() => setActiveTab("account")}
               >
@@ -304,7 +303,7 @@ export default function Settings() {
             <li>
               <button
                 className={`w-full text-left px-4 py-2 rounded-lg font-semibold ${
-                  activeTab === "subscription" ? "bg-blue-100" : "hover:bg-gray-100"
+                  activeTab === "subscription" ? "bg-blue-100 text-blue-600" : "hover:bg-gray-100"
                 }`}
                 onClick={() => setActiveTab("subscription")}
               >
@@ -315,155 +314,163 @@ export default function Settings() {
         </div>
       </div>
 
-      <div className="flex-1 p-8">
+      {/* Content Area */}
+      <div className="flex-1 p-4 md:p-8">
         {activeTab === "account" ? (
           <>
             <h1 className="text-2xl font-bold mb-6">Account settings</h1>
 
-            {error && <div className="text-red-500 mb-4">{error}</div>}
-            {success && <div className="text-green-500 mb-4">{success}</div>}
+            {error && <div className="text-red-500 mb-4 p-3 bg-red-50 border border-red-200 rounded-md">{error}</div>}
+            {success && <div className="text-green-600 mb-4 p-3 bg-green-50 border border-green-200 rounded-md">{success}</div>}
 
             <div className="mb-8">
-              <h3 className="text-sm font-semibold text-gray-500 mb-2">IMAGES</h3>
+              <h3 className="text-sm font-semibold text-gray-500 uppercase mb-2">Images</h3>
               <h4 className="text-lg font-semibold mb-4">Avatar</h4>
-              <div className="flex items-center gap-4">
-                <div className="w-16 h-16 rounded-full bg-gray-200 flex items-center justify-center">
+              <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center">
+                <div className="w-16 h-16 rounded-full bg-gray-200 flex items-center justify-center shrink-0">
                   {avatar ? (
                     <img src={avatar} alt="User Avatar" className="w-full h-full rounded-full object-cover" />
                   ) : (
-                    <span className="text-gray-500">No Avatar</span>
+                    <span className="text-gray-500 text-xs text-center">No Avatar</span>
                   )}
                 </div>
-                <button
-                  className="px-4 py-2 border border-green-500 text-green-500 rounded-full hover:bg-green-50"
-                  onClick={() => document.getElementById("avatar-upload")?.click()}
-                >
-                  Upload Photo
-                </button>
-                <input
-                  id="avatar-upload"
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={handleAvatarUpload}
-                />
-                <button
-                  className="px-4 py-2 border border-gray-300 text-gray-600 rounded-full hover:bg-gray-50"
-                  onClick={handleAvatarDelete}
-                >
-                  Delete
-                </button>
+                <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+                  <button
+                    className="w-full sm:w-auto px-4 py-2 border border-green-500 text-green-500 rounded-full hover:bg-green-50"
+                    onClick={() => document.getElementById("avatar-upload")?.click()}
+                  >
+                    Upload Photo
+                  </button>
+                  <input
+                    id="avatar-upload"
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handleAvatarUpload}
+                  />
+                  <button
+                    className="w-full sm:w-auto px-4 py-2 border border-gray-300 text-gray-600 rounded-full hover:bg-gray-50"
+                    onClick={handleAvatarDelete}
+                  >
+                    Delete
+                  </button>
+                </div>
               </div>
             </div>
 
             <div className="mb-8">
-              <h3 className="text-sm font-semibold text-gray-500 mb-2">PROFILE INFORMATION</h3>
+              <h3 className="text-sm font-semibold text-gray-500 uppercase mb-2">Profile Information</h3>
               <div className="space-y-4">
                 <div>
-                  <label className="block text-lg font-semibold mb-2">Full name</label>
+                  <label htmlFor="fullNameInput" className="block text-lg font-semibold mb-1">Full name</label>
                   <input
+                    id="fullNameInput"
                     type="text"
                     value={fullName}
                     onChange={(e) => setFullName(e.target.value)}
                     onBlur={handleFullNameUpdate}
                     placeholder="Enter your full name (e.g. Sam Brown)"
-                    className="w-full max-w-md p-2 border border-gray-300 rounded-lg"
+                    className="w-full max-w-md p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
                   />
                 </div>
                 <div>
-                  <label className="block text-lg font-semibold mb-2">Username</label>
-                  <p className="text-gray-600">{user?.username || user?.name || user?.email}</p>
+                  <label className="block text-lg font-semibold mb-1">Username</label>
+                  <p className="text-gray-600">{user?.username || user?.name || user?.email?.split('@')[0]}</p>
                 </div>
               </div>
             </div>
 
             <div className="mb-8">
-              <h3 className="text-sm font-semibold text-gray-500 mb-2">ACCOUNT PREFERENCES</h3>
-              <div className="space-y-4">
+              <h3 className="text-sm font-semibold text-gray-500 uppercase mb-2">Account Preferences</h3>
+              <div className="space-y-6">
                 <div>
-                  <label className="block text-lg font-semibold mb-2">Email Address</label>
+                  <label htmlFor="emailInput" className="block text-lg font-semibold mb-1">Email Address</label>
                   <input
+                    id="emailInput"
                     type="email"
-                    value={newEmail}
-                    onChange={(e) => setNewEmail(e.target.value)}
-                    placeholder="Enter your new email"
-                    className="w-full max-w-md p-2 border border-gray-300 rounded-lg"
+                    value={newEmail} // This field shows current email, modalEmail is for new one
+                    readOnly // User should change it via modal
+                    className="w-full max-w-md p-2 border border-gray-300 rounded-lg bg-gray-50"
                   />
-                  <button
+                   <button
                     onClick={() => {
-                      setModalEmail(newEmail);
+                      setModalEmail(newEmail); // Pre-fill modal with current email
                       setShowEmailModal(true);
                     }}
-                    className="mt-2 px-4 py-2 bg-teal-500 text-white rounded-lg hover:bg-teal-600"
+                    className="mt-2 w-full sm:w-auto px-4 py-2 bg-teal-500 text-white rounded-lg hover:bg-teal-600"
                   >
-                    change Email
+                    Change Email
                   </button>
                   <p className="text-sm text-gray-500 mt-1">
-                    You have to verify your email to get personal information from our site
+                    You will need to verify your new email address.
                   </p>
                 </div>
                 <div>
-                  <label className="block text-lg font-semibold mb-2">Password</label>
+                  <label htmlFor="passwordInput" className="block text-lg font-semibold mb-1">Password</label>
                   <input
+                    id="passwordInput"
                     type="password"
-                    value={newPassword}
+                    value={newPassword} // This field is for display or prefill, actual change in modal
                     onChange={(e) => setNewPassword(e.target.value)}
-                    placeholder="Password must be at least 6 characters long"
-                    className="w-full max-w-md p-2 border border-gray-300 rounded-lg"
+                    placeholder="New password (at least 6 characters)"
+                    className="w-full max-w-md p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
                   />
-                  <button
+                   <button
                     onClick={() => {
                       setModalOldPassword("");
-                      setModalNewPassword(newPassword);
+                      setModalNewPassword(newPassword); // Pre-fill new password from the input if user typed something
                       setModalConfirmPassword("");
                       setShowPasswordModal(true);
                     }}
-                    className="mt-2 px-4 py-2 bg-teal-500 text-white rounded-lg hover:bg-teal-600"
+                    className="mt-2 w-full sm:w-auto px-4 py-2 bg-teal-500 text-white rounded-lg hover:bg-teal-600"
                   >
-                    change Password
+                    Change Password
                   </button>
                 </div>
               </div>
             </div>
 
             <div className="mb-8">
-              <h3 className="text-sm font-semibold text-gray-500 mb-2">EMAIL NOTIFICATIONS</h3>
+              <h3 className="text-sm font-semibold text-gray-500 uppercase mb-2">Email Notifications</h3>
               <div className="space-y-4">
-                <div className="flex items-center gap-4">
-                  <label className="text-lg font-semibold">Plant care reminders</label>
+                <div className="flex items-center justify-between gap-4">
+                  <label htmlFor="plantCareReminders" className="text-lg font-semibold">Plant care reminders</label>
                   <input
+                    id="plantCareReminders"
                     type="checkbox"
                     checked={plantCareReminders}
                     onChange={(e) => handleNotificationUpdate("plantCare", e.target.checked)}
-                    className="w-5 h-5"
+                    className="w-5 h-5 shrink-0 text-teal-600 border-gray-300 rounded focus:ring-teal-500"
                   />
                 </div>
-                <div className="flex items-center gap-4">
-                  <label className="text-lg font-semibold">New articles notifications</label>
+                <div className="flex items-center justify-between gap-4">
+                  <label htmlFor="newArticlesNotifications" className="text-lg font-semibold">New articles notifications</label>
                   <input
+                    id="newArticlesNotifications"
                     type="checkbox"
                     checked={newArticlesNotifications}
                     onChange={(e) => handleNotificationUpdate("newArticles", e.target.checked)}
-                    className="w-5 h-5"
+                    className="w-5 h-5 shrink-0 text-teal-600 border-gray-300 rounded focus:ring-teal-500"
                   />
                 </div>
               </div>
             </div>
 
             <div>
-              <h3 className="text-sm font-semibold text-gray-500 mb-2">DELETE ACCOUNT</h3>
+              <h3 className="text-sm font-semibold text-gray-500 uppercase mb-2">Delete Account</h3>
               <p className="text-gray-600 mb-4">
                 Note that deleting an account does not cancel the subscription! You can change this in your{" "}
                 <button
                   onClick={() => setActiveTab("subscription")}
-                  className="text-blue-500 hover:underline"
+                  className="text-blue-500 hover:underline font-semibold"
                 >
                   subscription settings
                 </button>
+                .
               </p>
               <button
                 onClick={handleDeleteAccount}
-                className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600"
+                className="w-full sm:w-auto px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600"
               >
                 Delete Account
               </button>
@@ -473,25 +480,25 @@ export default function Settings() {
           <>
             <h1 className="text-2xl font-bold mb-6">Subscription info</h1>
 
-            {error && <div className="text-red-500 mb-4">{error}</div>}
-            {success && <div className="text-green-500 mb-4">{success}</div>}
-
+            {error && <div className="text-red-500 mb-4 p-3 bg-red-50 border border-red-200 rounded-md">{error}</div>}
+            {success && <div className="text-green-600 mb-4 p-3 bg-green-50 border border-green-200 rounded-md">{success}</div>}
+            
             <div className="mb-8">
-              <h3 className="text-sm font-semibold text-gray-500 mb-4">AVAILABLE PLANS</h3>
+              <h3 className="text-sm font-semibold text-gray-500 uppercase mb-4">Available Plans</h3>
               <div className="space-y-6">
                 {subscriptionPlans.map((plan, index) => (
                   <div
                     key={index}
-                    className="flex justify-between items-center p-4 border border-gray-200 rounded-lg shadow-sm"
+                    className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 p-4 border border-gray-200 rounded-lg shadow-sm"
                   >
-                    <div>
+                    <div className="flex-grow">
                       <h4 className="text-lg font-semibold">{plan.title}</h4>
                       <p className="text-gray-600">
-                        {plan.price} {plan.renewable && "auto-renewable"}
+                        ${plan.price} {plan.renewable && "/ auto-renewable"}
                       </p>
                     </div>
                     <button
-                      className="px-6 py-2 bg-teal-500 text-white rounded-full hover:bg-teal-600"
+                      className="w-full sm:w-auto px-6 py-2 bg-teal-500 text-white rounded-full hover:bg-teal-600 shrink-0"
                       onClick={() => handleGetTrial(plan.title)}
                     >
                       Get Trial
@@ -500,44 +507,50 @@ export default function Settings() {
                 ))}
               </div>
             </div>
+             {/* You can add more subscription related info here, e.g., current plan, billing history, cancel subscription button */}
+             {/*
+             <div className="mt-8 p-4 border border-gray-200 rounded-lg">
+                <h4 className="text-lg font-semibold mb-2">Your Current Plan</h4>
+                <p className="text-gray-700">You are currently on the <strong>Free Plan</strong>.</p>
+                <p className="text-gray-500 text-sm mt-1">Upgrade to access exclusive features and content.</p>
+             </div>
+             */}
           </>
         )}
       </div>
 
       {/* Email Update Modal */}
       {showEmailModal && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
-          <div className="relative bg-white rounded-2xl shadow-lg w-full max-w-md flex">
-            <div className="absolute inset-y-0 left-0 w-24 bg-blue-50 rounded-l-2xl flex items-center justify-center">
-              <svg className="w-16 h-16 text-blue-200" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M5 3a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2V5a2 2 0 00-2-2H5zm0-2h14a4 4 0 014 4v14a4 4 0 01-4 4H5a4 4 0 01-4-4V5a4 4 0 014-4z"/>
-                <path d="M12 12c2.5 0 4-2 4-4s-1.5-4-4-4-4 2-4 4 1.5 4 4 4zm0 2c-3 0-6 1.5-6 4v2h12v-2c0-2.5-3-4-6-4z"/>
-              </svg>
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 p-4 z-50">
+          <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-md flex">
+            <div className="absolute inset-y-0 left-0 w-24 bg-blue-50 rounded-l-2xl hidden sm:flex items-center justify-center">
+              <svg className="w-12 h-12 text-blue-300" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path fillRule="evenodd" clipRule="evenodd" d="M20 5H4C2.89543 5 2 5.89543 2 7V17C2 18.1046 2.89543 19 4 19H20C21.1046 19 22 18.1046 22 17V7C22 5.89543 21.1046 5 20 5ZM20 7L12 12L4 7H20ZM4 17V9L12 14L20 9V17H4Z"/></svg>
             </div>
-            <div className="pl-28 p-6 flex-1">
+            <div className="p-6 sm:pl-28 flex-1">
               <button
-                className="absolute top-4 right-4 text-gray-500 hover:text-gray-700"
+                className="absolute top-3 right-3 text-gray-400 hover:text-gray-600"
                 onClick={() => setShowEmailModal(false)}
               >
-                ✕
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg>
               </button>
               <h2 className="text-xl font-bold mb-2">Update your email</h2>
               <p className="text-sm text-gray-600 mb-4">
-                You can update your email address below. We will send you a verification letter to your new email address. Please do not hesitate to verify your account.
+                Enter your new email address below. We will send a verification link to your new email.
               </p>
-              <label className="block text-sm font-medium mb-1">
-                Email<span className="text-red-500">*</span>
+              <label htmlFor="modalEmailInput" className="block text-sm font-medium mb-1">
+                New Email<span className="text-red-500">*</span>
               </label>
               <input
+                id="modalEmailInput"
                 type="email"
                 value={modalEmail}
                 onChange={(e) => setModalEmail(e.target.value)}
                 placeholder="Enter your new email"
-                className="w-full p-2 border border-gray-300 rounded-lg mb-4"
+                className="w-full p-2 border border-gray-300 rounded-lg mb-4 focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
               />
               <button
                 onClick={handleEmailUpdate}
-                className="w-full py-2 bg-teal-200 text-teal-800 rounded-full hover:bg-teal-300"
+                className="w-full py-2.5 bg-teal-500 text-white rounded-full hover:bg-teal-600 font-semibold"
               >
                 Change email
               </button>
@@ -548,24 +561,21 @@ export default function Settings() {
 
       {/* Password Update Modal */}
       {showPasswordModal && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
-          <div className="relative bg-white rounded-2xl shadow-lg w-full max-w-md flex">
-            <div className="absolute inset-y-0 left-0 w-24 bg-blue-50 rounded-l-2xl flex items-center justify-center">
-              <svg className="w-16 h-16 text-blue-200" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M5 3a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2V5a2 2 0 00-2-2H5zm0-2h14a4 4 0 014 4v14a4 4 0 01-4 4H5a4 4 0 01-4-4V5a4 4 0 014-4z"/>
-                <path d="M12 12c2.5 0 4-2 4-4s-1.5-4-4-4-4 2-4 4 1.5 4 4 4zm0 2c-3 0-6 1.5-6 4v2h12v-2c0-2.5-3-4-6-4z"/>
-              </svg>
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 p-4 z-50">
+          <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-md flex">
+            <div className="absolute inset-y-0 left-0 w-24 bg-blue-50 rounded-l-2xl hidden sm:flex items-center justify-center">
+             <svg className="w-12 h-12 text-blue-300" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path fillRule="evenodd" clipRule="evenodd" d="M12 1C8.68629 1 6 3.68629 6 7V8H5C3.89543 8 3 8.89543 3 10V19C3 20.1046 3.89543 21 5 21H19C20.1046 21 21 20.1046 21 19V10C21 8.89543 20.1046 8 19 8H18V7C18 3.68629 15.3137 1 12 1ZM12 3C14.2091 3 16 4.79086 16 7V8H8V7C8 4.79086 9.79086 3 12 3ZM5 10H19V19H5V10Z"/></svg>
             </div>
-            <div className="pl-28 p-6 flex-1">
+            <div className="p-6 sm:pl-28 flex-1">
               <button
-                className="absolute top-4 right-4 text-gray-500 hover:text-gray-700"
+                className="absolute top-3 right-3 text-gray-400 hover:text-gray-600"
                 onClick={() => setShowPasswordModal(false)}
               >
-                ✕
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg>
               </button>
               <h2 className="text-xl font-bold mb-2">Update your password</h2>
               <p className="text-sm text-gray-600 mb-4">
-                You can update your password below. Please ensure it is at least 6 characters long.
+                Ensure your new password is at least 6 characters long.
               </p>
               <label className="block text-sm font-medium mb-1">
                 Old Password<span className="text-red-500">*</span>
@@ -575,7 +585,7 @@ export default function Settings() {
                 value={modalOldPassword}
                 onChange={(e) => setModalOldPassword(e.target.value)}
                 placeholder="Enter your old password"
-                className="w-full p-2 border border-gray-300 rounded-lg mb-4"
+                className="w-full p-2 border border-gray-300 rounded-lg mb-3 focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
               />
               <label className="block text-sm font-medium mb-1">
                 New Password<span className="text-red-500">*</span>
@@ -585,7 +595,7 @@ export default function Settings() {
                 value={modalNewPassword}
                 onChange={(e) => setModalNewPassword(e.target.value)}
                 placeholder="Enter your new password"
-                className="w-full p-2 border border-gray-300 rounded-lg mb-4"
+                className="w-full p-2 border border-gray-300 rounded-lg mb-3 focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
               />
               <label className="block text-sm font-medium mb-1">
                 Confirm Password<span className="text-red-500">*</span>
@@ -595,11 +605,11 @@ export default function Settings() {
                 value={modalConfirmPassword}
                 onChange={(e) => setModalConfirmPassword(e.target.value)}
                 placeholder="Confirm your new password"
-                className="w-full p-2 border border-gray-300 rounded-lg mb-4"
+                className="w-full p-2 border border-gray-300 rounded-lg mb-4 focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
               />
               <button
                 onClick={handlePasswordChange}
-                className="w-full py-2 bg-teal-200 text-teal-800 rounded-full hover:bg-teal-300"
+                className="w-full py-2.5 bg-teal-500 text-white rounded-full hover:bg-teal-600 font-semibold"
               >
                 Change password
               </button>

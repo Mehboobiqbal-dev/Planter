@@ -307,7 +307,7 @@ export default function PlantProblems() {
                     href={
                       selectedProblem.plantSlug
                         ? `/plants/${selectedProblem.plantSlug}`
-                        : `/problems/${selectedProblem.category}/${selectedProblem._id}`
+                        : `/problem/${selectedProblem._id}`
                     }
                     className="text-gray-500 font-semibold truncate max-w-[120px] md:max-w-[150px] inline-block hover:underline"
                   >
@@ -331,16 +331,13 @@ export default function PlantProblems() {
             Diagnose a Plant
           </button>
         </div>
-       <div
-  className="illustration-container hidden md:block w-full md:w-1/2 h-48 md:h-auto"
->
-  <img
-    src={selectedProblem ? selectedProblem.image : selectedCategory.headerImage}
-    alt={selectedProblem ? selectedProblem.title : `${selectedCategory.name} Illustration`}
-    className="w-full h-full object-cover"
-  />
-</div>
-
+        <div className="illustration-container w-full md:w-1/2 h-48 md:h-auto">
+          <img
+            src={selectedProblem ? selectedProblem.image : selectedCategory.headerImage}
+            alt={selectedProblem ? selectedProblem.title : `${selectedCategory.name} Illustration`}
+            className="w-full h-full object-cover"
+          />
+        </div>
       </header>
       <nav className="mt-6 pb-2 px-4">
         <ul className="flex space-x-4 overflow-x-auto no-scrollbar">
@@ -431,9 +428,20 @@ export default function PlantProblems() {
             <div className="mx-auto w-full px-4 py-6">
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
                 {problemList.map((item) => {
-                  const linkHref = item.plantSlug
-                    ? `/plants/${item.plantSlug}`
-                    : `/problems/${selectedCategory.slug === 'all-problem' && item.category ? item.category : selectedCategory.slug}/${item._id}`;
+                  // Generate link based on category
+                  let linkHref;
+                  if (item.plantSlug) {
+                    // Weeds go to /plants/[plantSlug]
+                    linkHref = `/plants/${item.plantSlug}`;
+                  } else if (['pests', 'diseases'].includes(item.category.toLowerCase())) {
+                    // Pests and Diseases go to /problem/[problemId]
+                    linkHref = `/problem/${item._id}`;
+                  } else {
+                    // Other categories go to /problems/[categorySlug]/[problemId]
+                    linkHref = `/problems/${
+                      selectedCategory.slug === 'all-problem' && item.category ? item.category : selectedCategory.slug
+                    }/${item._id}`;
+                  }
                   console.log(`Generating link for ${item.title}: ${linkHref} (plantSlug: ${item.plantSlug}, category: ${item.category})`);
                   return (
                     <Link
