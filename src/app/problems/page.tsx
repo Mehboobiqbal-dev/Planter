@@ -282,9 +282,9 @@ export default function PlantProblems() {
         className="shadow flex flex-wrap md:flex-nowrap"
         style={{ background: 'linear-gradient(to right, #DDF9D5, #BEFFE4)' }}
       >
-        <div className="p-6 w-full md:w-1/2">
+        <div className="p-4 md:p-6 w-full md:w-1/2">
           <div className="flex-grow flex items-start justify-start text-left">
-            <div className="text-sm">
+            <div className="text-xs md:text-sm">
               <Link href="/" className="text-gray-700 hover:underline">
                 PlantIn
               </Link>
@@ -309,7 +309,7 @@ export default function PlantProblems() {
                         ? `/plants/${selectedProblem.plantSlug}`
                         : `/problems/${selectedProblem.category}/${selectedProblem._id}`
                     }
-                    className="text-gray-500 font-semibold truncate max-w-[150px] inline-block hover:underline"
+                    className="text-gray-500 font-semibold truncate max-w-[120px] md:max-w-[150px] inline-block hover:underline"
                   >
                     {selectedProblem.title}
                   </Link>
@@ -317,27 +317,29 @@ export default function PlantProblems() {
               )}
             </div>
           </div>
-          <p className="text-3xl text-left md:text-4xl font-bold text-black mt-2">
+          <p className="text-2xl md:text-3xl text-left font-bold text-black mt-2">
             {selectedProblem ? selectedProblem.title : selectedCategory.title}
           </p>
-          <p className="text-sm text-left mt-1">
+          <p className="text-xs md:text-sm text-left mt-1">
             {selectedProblem ? `Learn about ${selectedProblem.title} and how to manage it.` : selectedCategory.description}
           </p>
           <button
             type="button"
-            className="flex items-center justify-center rounded-[30px] mt-4 w-full md:w-80 px-4 py-3 font-semibold text-white bg-gradient-to-r from-[#04BF94] to-[#52C8AD] shadow-xl hover:shadow-lg hover:from-[#06D3A4] hover:to-[#60E7C8]"
+            className="flex items-center justify-center rounded-[30px] mt-4 w-full px-4 py-3 font-semibold text-white bg-gradient-to-r from-[#04BF94] to-[#52C8AD] shadow-xl hover:shadow-lg hover:from-[#06D3A4] hover:to-[#60E7C8]"
           >
-            <img src="https://myplantin.com/icons/camera.svg" alt="Camera Icon" className="w-5 h-5 mr-2" />
+            <img src="https://myplantin.com/icons/camera.svg" alt="Camera Icon" className="w-4 h-4 md:w-5 md:h-5 mr-2" />
             Diagnose a Plant
           </button>
         </div>
-        <div className="w-full md:w-1/2 h-64 md:h-auto">
-          <img
-            src={selectedProblem ? selectedProblem.image : selectedCategory.headerImage}
-            alt={selectedProblem ? selectedProblem.title : `${selectedCategory.name} Illustration`}
-            className="w-full h-full object-cover"
-          />
-        </div>
+        <div
+  className="illustration-container w-full md:w-1/2 h-48 md:h-auto"
+>
+  <img
+    src={selectedProblem ? selectedProblem.image : selectedCategory.headerImage}
+    alt={selectedProblem ? selectedProblem.title : `${selectedCategory.name} Illustration`}
+    className="w-full h-full object-cover"
+  />
+</div>
       </header>
       <nav className="mt-6 pb-2 px-4">
         <ul className="flex space-x-4 overflow-x-auto no-scrollbar">
@@ -467,14 +469,19 @@ export default function PlantProblems() {
         .prose ul,
         .prose ol,
         .prose blockquote {
-          margin-bottom: 1em;
+          margin-bottom: 0.75em md:margin-bottom: 1em;
         }
         .prose ul,
         .prose ol {
-          padding-left: 1.5em;
+          padding-left: 1.25em md:padding-left: 1.5em;
         }
         .prose li > p {
-          margin-bottom: 0.5em;
+          margin-bottom: 0.4em md:margin-bottom: 0.5em;
+        }
+        @media (max-width: 767px) {
+          header .illustration-container.hidden-md {
+            display: none !important;
+          }
         }
       `}</style>
     </div>
