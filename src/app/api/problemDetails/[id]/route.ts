@@ -1,5 +1,7 @@
+// app/api/problems/[id]/route.ts (or your existing path)
 import { NextRequest, NextResponse } from 'next/server';
-import { MongoClient, ObjectId } from 'mongodb';
+import { ObjectId } from 'mongodb';
+import clientPromise from '../../../../../lib/mongodb'; // Adjust path
 
 interface ProblemDetail {
   _id: string;
@@ -9,48 +11,54 @@ interface ProblemDetail {
   images: string[];
 }
 
+interface ProblemDocument {
+  _id: ObjectId;
+  scientificName: string;
+  fullDescription: string;
+  SignOfDamage: string;
+  images: string[];
+}
+
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: { id: string } }
 ) {
-  // 1) Extract and validate the ID
-  const { id } = await params;
+  const overallStartTime = Date.now();
+  console.log(`[${new Date().toISOString()}] API_REQUEST_START - ID: ${params.id}`);
+
+  const { id } = params;
+
   if (!ObjectId.isValid(id)) {
-    console.error(`Invalid ObjectId: ${id}`);
+    console.error(`[${new Date().toISOString()}] API_INVALID_ID - ID: ${id}. Total time: ${Date.now() - overallStartTime}ms`);
     return NextResponse.json(
       { error: 'Invalid problem ID' },
       { status: 400 }
     );
   }
 
-  // 2) Connect to MongoDB and fetch the detail
-  const uri = process.env.MONGODB_URI;
-  if (!uri) {
-    console.error('MONGODB_URI is not defined');
-    return NextResponse.json(
-      { error: 'MONGODB_URI is not defined' },
-      { status: 500 }
-    );
-  }
-
-  const client = new MongoClient(uri);
   try {
-    await client.connect();
-    const db = client.db('plantdb');
-    const collection = db.collection('problemDetails');
+    const clientAcquireStartTime = Date.now();
+    const client = await clientPromise;
+    console.log(`[${new Date().toISOString()}] API_CLIENT_ACQUIRED - Time for clientPromise: ${Date.now() - clientAcquireStartTime}ms`);
 
-    console.log(`Querying problemDetails for _id: ${id}`);
+    const db = client.db('plantdb'); // Consider process.env.MONGODB_DB_NAME
+    const collection = db.collection<ProblemDocument>('problemDetails');
+
+    console.log(`[${new Date().toISOString()}] API_DB_QUERY_START - Querying for _id: ${id}`);
+    const queryStartTime = Date.now();
     const detail = await collection.findOne({ _id: new ObjectId(id) });
-    console.log(`Query result: ${detail ? 'Found' : 'Not found'}`);
+    const queryDuration = Date.now() - queryStartTime;
+    console.log(`[${new Date().toISOString()}] API_DB_QUERY_END - Time for findOne: ${queryDuration}ms. Found: ${!!detail}`);
 
     if (!detail) {
-      console.error(`No document found for _id: ${id}`);
+      console.log(`[${new Date().toISOString()}] API_NOT_FOUND - ID: ${id}. Total time: ${Date.now() - overallStartTime}ms`);
       return NextResponse.json(
         { error: 'Problem detail not found' },
         { status: 404 }
       );
     }
 
+    const formatStartTime = Date.now();
     const formatted: ProblemDetail = {
       _id: detail._id.toString(),
       scientificName: detail.scientificName,
@@ -58,15 +66,18 @@ export async function GET(
       SignOfDamage: detail.SignOfDamage,
       images: detail.images,
     };
+    console.log(`[${new Date().toISOString()}] API_FORMAT_END - Time for formatting: ${Date.now() - formatStartTime}ms`);
 
+    console.log(`[${new Date().toISOString()}] API_REQUEST_SUCCESS - Total time: ${Date.now() - overallStartTime}ms`);
     return NextResponse.json(formatted);
-  } catch (err) {
-    console.error(`Error fetching problem detail for id ${id}:`, err);
+
+  } catch (err: any) {
+    console.error(`[${new Date().toISOString()}] API_ERROR - ID: ${id}:`, err);
+    console.error(`[${new Date().toISOString()}] API_ERROR_DETAIL - Total time before error: ${Date.now() - overallStartTime}ms`);
+    const errorMessage = process.env.NODE_ENV === 'development' ? err.message : 'Failed to fetch problem detail';
     return NextResponse.json(
-      { error: 'Failed to fetch problem detail' },
+      { error: errorMessage },
       { status: 500 }
     );
-  } finally {
-    await client.close();
   }
 }

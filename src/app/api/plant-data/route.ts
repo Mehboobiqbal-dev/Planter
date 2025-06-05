@@ -1,6 +1,8 @@
 // src/app/api/plant-data/route.ts
 import { NextRequest, NextResponse } from 'next/server';
-import { MongoClient } from 'mongodb';
+// ↓↓↓ IMPORT THE SHARED CLIENT PROMISE ↓↓↓
+import clientPromise from '../../../../lib/mongodb'; // Adjust path if needed
+import { ObjectId } from 'mongodb'; // For typing if you use it for raw docs
 
 // Interfaces remain the same
 interface Category {
@@ -14,8 +16,31 @@ interface Category {
   expandedDescription: string;
 }
 
+// Optional: More accurate type for MongoDB category documents
+interface CategoryDocument {
+  _id: ObjectId;
+  name: string;
+  slug: string;
+  headerImage: string;
+  title: string;
+  description: string;
+  mainDescription: string;
+  expandedDescription: string;
+}
+
 interface Plant {
   _id: string;
+  name: string;
+  category: string; // This should ideally be a category slug or ID for better relations
+  image: string;
+  latin: string;
+  description?: string;
+  slug?: string;
+}
+
+// Optional: More accurate type for MongoDB plant documents
+interface PlantDocument {
+  _id: ObjectId;
   name: string;
   category: string;
   image: string;
@@ -31,41 +56,37 @@ interface ApiPlantDataResponse {
   selectedCategory: Category;
 }
 
-// If you already have a `clientPromise` (recommended), uncomment the next line and comment out the MongoClient instantiation below.
-// import clientPromise from '../../../../lib/mongodb';
 
 export async function GET(request: NextRequest) {
-  console.log('[API /api/plant-data] GET request received (No Auth).');
+  console.log('[API /api/plant-data] GET request received.');
 
   const { searchParams } = new URL(request.url);
   const requestedCategorySlug = searchParams.get('categorySlug') || 'all-plants';
   console.log(`[API /api/plant-data] Requested categorySlug: ${requestedCategorySlug}`);
 
-  const uri = process.env.MONGODB_URI;
-  if (!uri) {
-    console.error('[API /api/plant-data] MONGODB_URI is not defined.');
-    return NextResponse.json(
-      { error: 'Server configuration error: MONGODB_URI is not defined.' },
-      { status: 500 }
-    );
-  }
-
-  // Use clientPromise if you have it; otherwise create a new client
-  // const client = await clientPromise;
-  const client = new MongoClient(uri);
+  // MONGODB_URI check is handled by lib/mongodb.ts at startup
+  // No need for:
+  // const uri = process.env.MONGODB_URI;
+  // if (!uri) { ... }
 
   try {
-    console.time('[API /api/plant-data] DBConnect');
-    await client.connect();
-    console.timeEnd('[API /api/plant-data] DBConnect');
+    // ↓↓↓ USE THE SHARED CLIENT PROMISE ↓↓↓
+    console.time('[API /api/plant-data] ClientAcquired');
+    const client = await clientPromise;
+    console.timeEnd('[API /api/plant-data] ClientAcquired');
 
-    const database = client.db('plantdb'); // ← make sure this matches your actual DB name
+    // ↓↓↓ REMOVE client.connect() - it's handled by clientPromise ↓↓↓
+    // console.time('[API /api/plant-data] DBConnect');
+    // await client.connect();
+    // console.timeEnd('[API /api/plant-data] DBConnect');
+
+    const database = client.db(process.env.MONGODB_DB_NAME || 'plantdb');
 
     // ─────────────── Fetch categories ───────────────
     console.time('[API /api/plant-data] FetchCategories');
-    const categoryCollection = database.collection('categories');
+    const categoryCollection = database.collection<CategoryDocument>('categories');
     const categoriesFromDbRaw = await categoryCollection.find({}).toArray();
-    const dbCategories: Category[] = categoriesFromDbRaw.map((doc: any) => ({
+    const dbCategories: Category[] = categoriesFromDbRaw.map((doc) => ({
       _id: doc._id.toString(),
       name: doc.name,
       slug: doc.slug,
@@ -77,9 +98,8 @@ export async function GET(request: NextRequest) {
     }));
     console.timeEnd('[API /api/plant-data] FetchCategories');
 
-    // Ensure “All Plants” always appears first
     const allPlantsCategoryDefault: Category = {
-      _id: 'api-all-plants-default-id',
+      _id: 'api-all-plants-default-id', // Consider if this ID needs to be stable or different
       name: 'All Plants',
       slug: 'all-plants',
       headerImage: 'https://myplantin.com/images/all-plants-header.jpg',
@@ -91,12 +111,16 @@ export async function GET(request: NextRequest) {
 
     let finalCategories = [...dbCategories];
     let allPlantsCategoryInList = finalCategories.find(c => c.slug === 'all-plants');
+
     if (!allPlantsCategoryInList) {
       finalCategories.unshift(allPlantsCategoryDefault);
       allPlantsCategoryInList = allPlantsCategoryDefault;
+    } else {
+      // Ensure the "All Plants" from DB (if exists) is used for consistency
+      allPlantsCategoryInList = finalCategories.find(c => c.slug === 'all-plants')!;
     }
 
-    // Decide which category is selected
+
     let resolvedSelectedCategory: Category;
     if (requestedCategorySlug === 'all-plants') {
       resolvedSelectedCategory = allPlantsCategoryInList;
@@ -107,24 +131,24 @@ export async function GET(request: NextRequest) {
     console.log(`[API /api/plant-data] Resolved selectedCategory: ${resolvedSelectedCategory.name}`);
 
     // ─────────────── Fetch plants for that category ───────────────
-    const plantCollection = database.collection('plants');
+    const plantCollection = database.collection<PlantDocument>('plants');
     let plantsQuery = {};
     if (resolvedSelectedCategory.slug !== 'all-plants') {
-      // Make sure 'category' field is indexed in MongoDB for performance
+      // Ensure 'category' field (if it's storing category NAME) is indexed.
+      // Better: store category SLUG or _ID in plants.category for robust linking.
       plantsQuery = { category: resolvedSelectedCategory.name };
     }
 
     console.time('[API /api/plant-data] FetchPlantsForCategory');
-    // Only project necessary fields, and limit to 200
     const plantsForCategoryDb = await plantCollection
       .find(plantsQuery, {
         projection: { _id: 1, name: 1, category: 1, image: 1, latin: 1, description: 1, slug: 1 },
       })
-      .limit(200)
+      .limit(200) // Good practice
       .toArray();
     console.timeEnd('[API /api/plant-data] FetchPlantsForCategory');
 
-    const plantsForCategory: Plant[] = plantsForCategoryDb.map((doc: any) => ({
+    const plantsForCategory: Plant[] = plantsForCategoryDb.map((doc) => ({
       _id: doc._id.toString(),
       name: doc.name,
       category: doc.category,
@@ -136,34 +160,27 @@ export async function GET(request: NextRequest) {
     console.log(`[API /api/plant-data] Fetched ${plantsForCategory.length} plants for selected category.`);
 
     // ─────────────── Calculate plant counts via aggregation ───────────────
-    // This replaces the old code that did `find({}, {projection: {category:1}}).toArray()` then filtered in JS.
     console.time('[API /api/plant-data] CalculatePlantCounts');
     const countsCursor = plantCollection.aggregate([
-      {
-        $group: {
-          _id: '$category',
-          count: { $sum: 1 },
-        },
-      },
+      { $group: { _id: '$category', count: { $sum: 1 } } }, // Make sure 'category' field is indexed if it's frequently grouped on
     ]);
     const countsArray = await countsCursor.toArray();
-    // countsArray looks like: [ { _id: 'Ferns', count: 123 }, { _id: 'Succulents', count: 456 }, … ]
 
-    // Build a quick lookup map from category name → count
     const countsMap: Record<string, number> = {};
     let totalCount = 0;
-    countsArray.forEach((item: any) => {
-      countsMap[item._id] = item.count;
-      totalCount += item.count;
+    countsArray.forEach((item: any) => { // Type item more strictly if possible
+      if (item._id) { // Guard against null/undefined categories if they can exist
+        countsMap[item._id] = item.count;
+        totalCount += item.count;
+      }
     });
 
-    // Now assemble plantCounts for each category in finalCategories
     const plantCounts: { [key: string]: number } = {};
     finalCategories.forEach((cat) => {
       if (cat.slug === 'all-plants') {
-        // “All Plants” gets the total of everything
         plantCounts[cat.name] = totalCount;
       } else {
+        // Assumes cat.name matches the value in plant.category field
         plantCounts[cat.name] = countsMap[cat.name] || 0;
       }
     });
@@ -184,10 +201,12 @@ export async function GET(request: NextRequest) {
       error instanceof Error ? error.message : 'An unknown internal server error occurred.';
     return NextResponse.json({ error: `Internal server error: ${errorMessage}` }, { status: 500 });
   } finally {
-    console.time('[API /api/plant-data] DBClose');
-    if (client) {
-      await client.close();
-    }
-    console.timeEnd('[API /api/plant-data] DBClose');
+    // ↓↓↓ REMOVE client.close() - connection is managed globally ↓↓↓
+    // console.time('[API /api/plant-data] DBClose');
+    // if (client) { // client will always be defined if await clientPromise succeeds
+    //   await client.close();
+    // }
+    // console.timeEnd('[API /api/plant-data] DBClose');
+    console.log('[API /api/plant-data] Request finished.');
   }
 }
