@@ -50,7 +50,7 @@ export default function PlantSearchWrapper({
   }, [initialPlants]);
 
   const handleSearch = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const term = event.target.value.toLowerCase().trim();
+    const term = event.target.value.toLowerCase();
     setSearchTerm(term);
 
     // Filter plants based on search term
