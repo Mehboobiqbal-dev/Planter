@@ -331,13 +331,16 @@ export default function PlantProblems() {
             Diagnose a Plant
           </button>
         </div>
-        <div className="illustration-container w-full md:w-1/2 h-48 md:h-auto">
-          <img
-            src={selectedProblem ? selectedProblem.image : selectedCategory.headerImage}
-            alt={selectedProblem ? selectedProblem.title : `${selectedCategory.name} Illustration`}
-            className="w-full h-full object-cover"
-          />
-        </div>
+        <div
+  className="illustration-container hidden md:block w-full md:w-1/2 h-48 md:h-auto"
+>
+  <img
+    src={selectedProblem ? selectedProblem.image : selectedCategory.headerImage}
+    alt={selectedProblem ? selectedProblem.title : `${selectedCategory.name} Illustration`}
+    className="w-full h-full object-cover"
+  />
+</div>
+
       </header>
       <nav className="mt-6 pb-2 px-4">
         <ul className="flex space-x-4 overflow-x-auto no-scrollbar">
