@@ -107,63 +107,64 @@ const FeedPage = () => {
 
           {/* Posts Feed */}
           <div className="space-y-6">
-            {posts.map(post => (
-              <div key={post.id} className="bg-white rounded-lg shadow p-4">
-                <div className="flex items-center space-x-3 mb-3">
-                  <img src={post.avatar} alt="avatar" className="w-10 h-10 rounded-full" />
-                  <div>
-                    <p className="font-bold text-sm">{post.user}</p>
-                    <p className="text-xs text-gray-500">{post.time}</p>
-                  </div>
-                </div>
-                <img src={post.image} alt="post" className="w-full h-64 object-cover rounded-lg mb-3" />
-                {post.title && <h3 className="font-bold text-lg">{post.title}</h3>}
-                {post.description && <p className="text-gray-600 mt-1">{post.description}</p>}
-                <div className="flex space-x-6 mt-3">
-                  <div className="flex items-center text-gray-500">
-                    <img
-                      src="https://myplantin.com/_next/image?url=https%3A%2F%2Fstrapi.myplantin.com%2Fwishlist_deselected_cc83c91d5d.webp&w=48&q=75"
-                      alt="like"
-                      className="w-5 h-5 mr-1"
-                    />
-                    <span>{post.likes}</span>
-                  </div>
-                  <div className="flex items-center text-gray-500">
-                    <img
-                      src="https://myplantin.com/_next/image?url=https%3A%2F%2Fstrapi.myplantin.com%2Fchat_1_7090c775e8.webp&w=48&q=75"
-                      alt="comment"
-                      className="w-5 h-5 mr-1"
-                    />
-                    <span>{post.comments}</span>
-                  </div>
-                  <div className="flex items-center text-gray-500">
-                    <img
-                      src="https://myplantin.com/_next/image?url=https%3A%2F%2Fstrapi.myplantin.com%2Fshare_1_3_964619960c.webp&w=256&q=75"
-                      alt="share"
-                      className="w-5 h-5"
-                    />
-                  </div>
-                  <div className="flex items-center w-full bg-white border border-gray-300 rounded-xl px-4 py-3 mt-5">
-  <input
-    type="text"
-    placeholder="Enter your comment here"
-    className="flex-grow text-14 leading-normal text-textSubtitle placeholder:text-[#A2B5D1B3] outline-none"
-  />
-  <RiImageAddFill className="ml-3 text-14 leading-normal text-textSubtitle cursor-pointer" />
-  <button
-    type="button"
-    className="ml-3 font-semibold text-14 leading-normal text-textSubtitle"
-  >
-    Post
-  </button>
-</div>
-
-                </div>
-              </div>
-            ))}
-          </div>
+  {posts.map(post => (
+    <div key={post.id} className="bg-white rounded-lg shadow p-4">
+      <div className="flex items-center space-x-3 mb-3">
+        <img src={post.avatar} alt="avatar" className="w-10 h-10 rounded-full" />
+        <div>
+          <p className="font-bold text-sm">{post.user}</p>
+          <p className="text-xs text-gray-500">{post.time}</p>
         </div>
-
+      </div>
+      <img src={post.image} alt="post" className="w-full h-64 object-cover rounded-lg mb-3" />
+      {post.title && <h3 className="font-bold text-lg">{post.title}</h3>}
+      {post.description && <p className="text-gray-600 mt-1">{post.description}</p>}
+      <div className="flex space-x-6 mt-3">
+        <div className="flex items-center text-gray-500">
+          <img
+            src="https://myplantin.com/_next/image?url=https%3A%2F%2Fstrapi.myplantin.com%2Fwishlist_deselected_cc83c91d5d.webp&w=48&q=75"
+            alt="like"
+            className="w-5 h-5 mr-1"
+          />
+          <span>{post.likes}</span>
+        </div>
+        <div className="flex items-center text-gray-500">
+          <img
+            src="https://myplantin.com/_next/image?url=https%3A%2F%2Fstrapi.myplantin.com%2Fchat_1_7090c775e8.webp&w=48&q=75"
+            alt="comment"
+            className="w-5 h-5 mr-1"
+          />
+          <span>{post.comments}</span>
+        </div>
+        <div className="flex items-center text-gray-500">
+          <img
+            src="https://myplantin.com/_next/image?url=https%3A%2F%2Fstrapi.myplantin.com%2Fshare_1_3_964619960c.webp&w=256&q=75"
+            alt="share"
+            className="w-5 h-5"
+          />
+        </div>
+      </div>
+      {/* Comment Input */}
+      <div className="w-full bg-white border border-gray-300 rounded-xl px-4 py-3 mt-5">
+        <div className="flex items-center">
+          <input
+            type="text"
+            placeholder="Enter your comment here"
+            className="flex-grow text-14 leading-normal text-textSubtitle placeholder:text-[#A2B5D1B3] outline-none"
+          />
+          <RiImageAddFill className="ml-3 text-14 leading-normal text-textSubtitle cursor-pointer" />
+          <button
+            type="button"
+            className="ml-3 font-semibold text-14 leading-normal text-textSubtitle"
+          >
+            Post
+          </button>
+        </div>
+      </div>
+    </div>
+  ))}
+</div>
+</div>
         {/* Help Icons */}
         <div className="hidden md:flex flex-col items-center space-y-6">
           <button className="bg-gray-200 p-3 rounded-full">

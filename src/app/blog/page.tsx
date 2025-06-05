@@ -144,7 +144,7 @@ const Blog = () => {
             />
           </div>
         </div>
-        <div className="w-1/2 h-full">
+        <div className="illustration-container hidden md:block w-full md:w-1/2 h-48 md:h-auto">
           <img
             src="https://myplantin.com/decorations/decoration-7.svg"
             alt="Illustration showing garden decoration"
