@@ -96,16 +96,14 @@ export async function GET(
       return NextResponse.json({ error: 'Plant not found' }, { status: 404 });
     }
 
-    // --- THIS IS THE CRUCIAL MAPPING ---
-    // Ensure that `plantDoc` actually has `description` and `invitation`
-    // before you try to access them.
+   
     console.log("[API /api/plants/[id]] RAW plantDoc from DB:", JSON.stringify(plantDoc, null, 2));
 
 
     const formatted: Plant = {
       _id: plantDoc._id?.toString() || '',
       name: plantDoc.name || 'Unknown Plant',
-      category: plantDoc.category || 'Unknown', // Assuming 'category' exists directly
+      category: plantDoc.category || 'Unknown', 
       image: plantDoc.image || '/images/default-plant.jpg', // Assuming 'image' (primary image URL string) exists
       latin: plantDoc.latin || undefined,
       description: plantDoc.description || '', // Directly from DB field
