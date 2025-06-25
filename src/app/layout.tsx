@@ -1,14 +1,14 @@
 'use client';
-
-import './globals.css';
-import { NavigationHeader } from './components/NavigationHeader';
-import StickyFooter from './components/StickyFooter';
-import Footer from './components/Footer';
 import { SessionProvider } from 'next-auth/react';
 import { Poppins } from 'next/font/google';
 import ReduxProvider from './redux/providers';
 import { usePathname } from 'next/navigation';
 import React from 'react';
+
+import './globals.css';
+import { NavigationHeader } from './components/navigation/NavigationHeader';
+import StickyFooter from './components/StickyFooter';
+import Footer from './components/Footer';
 
 const poppins = Poppins({
   subsets: ['latin'],

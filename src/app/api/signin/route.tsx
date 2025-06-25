@@ -19,6 +19,7 @@ export async function POST(req: NextRequest) {
     const users = db.collection("users");
 
     const { email, password } = await req.json();
+    const normalizedEmail = email?.toLowerCase();
     console.log(email, password);
     if (!email || !password) {
       return NextResponse.json(
@@ -36,7 +37,7 @@ export async function POST(req: NextRequest) {
       [key: string]: any;
     }
 
-    const user = await users.findOne<UserDocument>({ email });
+    const user = await users.findOne<UserDocument>({ email: normalizedEmail });
     if (!user) {
       return NextResponse.json(
         { error: "Invalid email or password" },

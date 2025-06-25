@@ -1,7 +1,8 @@
 // src/app/api/plants/related/route.ts
 import { NextRequest, NextResponse } from 'next/server';
-import { MongoClient, ObjectId } from 'mongodb';
+import { MongoClient, ObjectId, WithId } from 'mongodb';
 
+// Interface for the data returned by the API
 interface Plant {
   _id: string;
   name: string;
@@ -10,6 +11,20 @@ interface Plant {
   latin: string;
   slug?: string;
 }
+
+// --- START: FIX 1 ---
+// Interface representing the document structure in your MongoDB collection.
+// This tells TypeScript that _id can be an ObjectId, a number, or a string.
+interface PlantDocument {
+  _id: ObjectId | number | string;
+  name: string;
+  category: string;
+  image?: string;
+  latin?: string;
+  slug?: string;
+}
+// --- END: FIX 1 ---
+
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
@@ -33,23 +48,31 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  // Create a new client (or swap this with your shared clientPromise)
   const client = new MongoClient(uri);
   try {
-    // Connect once
     await client.connect();
-    const db = client.db('plantdb');   // ← your DB name
-    const plantsColl = db.collection('plants');
+    const db = client.db('plantdb');
+    
+    // --- START: FIX 2 ---
+    // Get a typed collection. Now TypeScript knows the shape of your documents.
+    const plantsColl = db.collection<PlantDocument>('plants');
+    // --- END: FIX 2 ---
 
-    // Convert excludeId to ObjectId once
-    const excludeObjectId = new ObjectId(excludeId);
+    let excludeQueryValue: ObjectId | number | string;
+    if (ObjectId.isValid(excludeId)) {
+      excludeQueryValue = new ObjectId(excludeId);
+    } else {
+      const numericId = parseInt(excludeId, 10);
+      excludeQueryValue = !isNaN(numericId) ? numericId : excludeId;
+    }
 
-    // Build the two cursors:
+    // Now, the .find() calls are type-safe because TypeScript knows that
+    // the `_id` in a PlantDocument can match the type of `excludeQueryValue`.
     const inCategoryCursor = plantsColl
       .find(
         {
           category: category,
-          _id: { $ne: excludeObjectId },
+          _id: { $ne: excludeQueryValue },
         },
         {
           projection: { name: 1, category: 1, image: 1, latin: 1, slug: 1 },
@@ -61,7 +84,7 @@ export async function GET(request: NextRequest) {
       .find(
         {
           category: { $ne: category },
-          _id: { $ne: excludeObjectId },
+          _id: { $ne: excludeQueryValue },
         },
         {
           projection: { name: 1, category: 1, image: 1, latin: 1, slug: 1 },
@@ -69,17 +92,14 @@ export async function GET(request: NextRequest) {
       )
       .limit(limit);
 
-    // Fetch both in parallel
     const [inCategoryDocs, otherDocs] = await Promise.all([
       inCategoryCursor.toArray(),
       otherCursor.toArray(),
     ]);
 
-    // Combine and then trim to `limit`
     const combined = [...inCategoryDocs, ...otherDocs].slice(0, limit);
 
-    // Map to plain JS with string _id
-    const related: Plant[] = combined.map((doc: any) => ({
+    const related: Plant[] = combined.map((doc) => ({
       _id: doc._id.toString(),
       name: doc.name,
       category: doc.category,
