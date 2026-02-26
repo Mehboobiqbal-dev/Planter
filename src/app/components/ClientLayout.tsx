@@ -29,7 +29,7 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
     <ReduxProvider>
       <SessionProvider refetchOnWindowFocus={false}>
         <NavigationHeader />
-        {children}
+        <main className="flex-grow bg-white">{children}</main>
         <StickyFooter />
         <Footer />
       </SessionProvider>
