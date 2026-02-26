@@ -76,7 +76,7 @@ export function PlantStructuredData({
     publisher: {
       '@type': 'Organization',
       name: 'PlantIn',
-      url: 'https://www.elch.live'
+      url: 'https://www.Planter.live'
     }
   }
 
@@ -127,7 +127,7 @@ export function ProblemStructuredData({
     publisher: {
       '@type': 'Organization',
       name: 'PlantIn',
-      url: 'https://www.elch.live'
+      url: 'https://www.Planter.live'
     }
   }
 

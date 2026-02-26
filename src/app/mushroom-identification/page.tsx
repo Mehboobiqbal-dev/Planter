@@ -7,7 +7,7 @@ const MushroomID = () => {
       <section className="flex flex-col md:flex-row items-center justify-center px-4 py-8 mx-auto max-w-[1320px] gap-8">
         <div className="flex-1 p-6">
           <h1 className="text-4xl font-bold mb-4 text-left">
-            Elch Mushroom Identification App Feature
+            Planter Mushroom Identification App Feature
           </h1>
           <p className="text-lg mb-6 text-left">
             Want to go mushroom hunting but not sure which mushrooms you should pick? Don't worry! PlantIn has a mushroom identification app feature designed to make your shroom foraging trip safe and fun!
@@ -53,38 +53,38 @@ const MushroomID = () => {
           Discover the fascinating world of mushrooms with PlantIn’s mushroom finder feature. The benefits don’t stop!
         </p>
         <ul className="mx-auto xl:max-w-[1230px] lg:max-w-[1100px] max-w-[960px] flex flex-wrap flex-row items-stretch justify-center m-[-6px] mt-[40px]">
-        <div className="flex flex-col md:flex-row items-center justify-center gap-8">
-          <li className="p-[6px] lg:w-[29%] md:w-[45%] w-[100%]">
-          <div className="flex flex-col items-center justify-center p-6 border rounded-lg shadow-md">
-            <div className="mb-4">
-              <img
-                src="https://myplantin.com/icons/mushroom-id-icon-1.svg"
-                alt="Search Icon"
-                className="h-10"
-              />
-            </div>
-            <p className="text-lg text-center">
-              Fast and accurate recognition of common and rare mushrooms and fungi.
-            </p>
-            
+          <div className="flex flex-col md:flex-row items-center justify-center gap-8">
+            <li className="p-[6px] lg:w-[29%] md:w-[45%] w-[100%]">
+              <div className="flex flex-col items-center justify-center p-6 border rounded-lg shadow-md">
+                <div className="mb-4">
+                  <img
+                    src="https://myplantin.com/icons/mushroom-id-icon-1.svg"
+                    alt="Search Icon"
+                    className="h-10"
+                  />
+                </div>
+                <p className="text-lg text-center">
+                  Fast and accurate recognition of common and rare mushrooms and fungi.
+                </p>
+
+              </div>
+            </li>
+            <li className="p-[6px] lg:w-[29%] md:w-[45%] w-[100%]">
+              <div className="flex flex-col items-center justify-center p-6 border rounded-lg shadow-md">
+                <div className="mb-4">
+                  <img
+                    src="https://myplantin.com/icons/mushroom-id-icon-2.svg"
+                    alt="Mushroom Icon"
+                    className="h-10"
+                  />
+                </div>
+                <p className="text-lg text-center">
+                  All the info on each mushroom you'll ever need: name, habitat, identification help, toxicity, measurements, uses, and so much more in one mushroom identifying app.
+                </p>
+              </div>
+            </li>
           </div>
-          </li>
-          <li className="p-[6px] lg:w-[29%] md:w-[45%] w-[100%]">
-          <div className="flex flex-col items-center justify-center p-6 border rounded-lg shadow-md">
-            <div className="mb-4">
-              <img
-                src="https://myplantin.com/icons/mushroom-id-icon-2.svg"
-                alt="Mushroom Icon"
-                className="h-10"
-              />
-            </div>
-            <p className="text-lg text-center">
-              All the info on each mushroom you'll ever need: name, habitat, identification help, toxicity, measurements, uses, and so much more in one mushroom identifying app.
-            </p>
-          </div>
-          </li>
-        </div>
-        
+
         </ul>
       </section>
     </main>

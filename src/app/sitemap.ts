@@ -13,7 +13,7 @@ interface Problem {
 }
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const baseUrl = 'https://www.elch.live'
+  const baseUrl = 'https://www.Planter.live'
 
   // Static URLs with their priorities and change frequencies
   const staticUrls: MetadataRoute.Sitemap = [

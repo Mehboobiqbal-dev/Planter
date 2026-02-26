@@ -33,7 +33,7 @@ export default function SEOHead({
     'herbs',
     'plant diagnosis'
   ],
-  image = 'https://www.elch.live/android-chrome-512x512.png',
+  image = 'https://www.Planter.live/android-chrome-512x512.png',
   url,
   type = 'website',
   publishedTime,
@@ -45,14 +45,14 @@ export default function SEOHead({
 }: SEOHeadProps) {
   const siteTitle = 'PlantIn - Plant Identification & Care'
   const fullTitle = title ? `${title} | ${siteTitle}` : siteTitle
-  const canonicalUrl = url ? `https://www.elch.live${url}` : 'https://www.elch.live'
+  const canonicalUrl = url ? `https://www.Planter.live${url}` : 'https://www.Planter.live'
 
   // Generate structured data for organization
   const organizationData = {
     name: 'PlantIn',
     description: 'Advanced AI-powered plant identification and care platform with expert botanical advice',
-    url: 'https://www.elch.live',
-    logo: 'https://www.elch.live/android-chrome-512x512.png',
+    url: 'https://www.Planter.live',
+    logo: 'https://www.Planter.live/android-chrome-512x512.png',
     sameAs: [
       'https://www.facebook.com/plantinapp',
       'https://www.instagram.com/plantinapp',
@@ -160,7 +160,7 @@ export function generatePlantSEO(plant: {
   const title = `${plant.name} Care Guide & Identification`
   const description = `Learn everything about ${plant.name}${plant.latin ? ` (${plant.latin})` : ''}. Care instructions, identification tips, growing guide, and common problems.`
   const url = `/plants/${plant.slug || plant.name.toLowerCase().replace(/\s+/g, '-')}`
-  const image = plant.image || 'https://www.elch.live/android-chrome-512x512.png'
+  const image = plant.image || 'https://www.Planter.live/android-chrome-512x512.png'
 
   return {
     title,

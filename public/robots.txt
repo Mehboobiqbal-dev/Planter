@@ -33,7 +33,7 @@ User-agent: WhatsApp
 Allow: /
 
 # Sitemap location
-Sitemap: https://www.elch.live/sitemap.xml
+Sitemap: https://www.Planter.live/sitemap.xml
 
 # Crawl delay (optional - helps with server load)
 Crawl-delay: 1

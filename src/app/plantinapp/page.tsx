@@ -244,65 +244,65 @@ const PlantIdentificationAppPage: React.FC = () => {
           <p className="text-center text-lg text-gray-700 mt-8">
             More than 10 million people regularly use the app to take care of their plants and recognize new ones. After a tremendous number of positive reviews and preserved plants in 97% of cases, we are ready to return your money if you’re unsatisfied with the results. We’re sure your garden will grow and bloom with us!
           </p>
-          
+
         </div>
       </section>
 
-      
-     
+
+
 
       {/* Download Section */}
-    <section className="bg-white py-12">
-      <div className="max-w-[1320px] mx-auto px-4">
-        <div className="flex flex-col md:flex-row items-center md:items-start justify-between gap-8">
-         
-          {/* Left side: Text + Buttons */}
-          <div className="md:w-1/2 space-y-6 text-left">
-           <h4 className='text-2xl font'>One solution for all the platforms</h4>
-            <p className="text-lg text-gray-700">
-              Prefer big screens? Get your plant care assistance on the desktop. PlantIn provides simultaneous access to the web and mobile versions. All data is synchronized.
-            </p>
-            <div className="flex space-x-4">
-              <a href="https://apps.apple.com/us/app/plantin-plant-identifier-care/id1527399597">
-                <img
-                  src="https://developer.apple.com/assets/elements/badges/download-on-the-app-store.svg"
-                  alt="Download on the App Store"
-                  className="h-12"
-                />
-              </a>
-              <a href="https://play.google.com/store/apps/details?id=com.plantin.app">
-                <img
-                  src="https://upload.wikimedia.org/wikipedia/commons/7/78/Google_Play_Store_badge_EN.svg"
-                  alt="Get it on Google Play"
-                  className="h-12"
-                />
-              </a>
+      <section className="bg-white py-12">
+        <div className="max-w-[1320px] mx-auto px-4">
+          <div className="flex flex-col md:flex-row items-center md:items-start justify-between gap-8">
+
+            {/* Left side: Text + Buttons */}
+            <div className="md:w-1/2 space-y-6 text-left">
+              <h4 className='text-2xl font'>One solution for all the platforms</h4>
+              <p className="text-lg text-gray-700">
+                Prefer big screens? Get your plant care assistance on the desktop. PlantIn provides simultaneous access to the web and mobile versions. All data is synchronized.
+              </p>
+              <div className="flex space-x-4">
+                <a href="https://apps.apple.com/us/app/plantin-plant-identifier-care/id1527399597">
+                  <img
+                    src="https://developer.apple.com/assets/elements/badges/download-on-the-app-store.svg"
+                    alt="Download on the App Store"
+                    className="h-12"
+                  />
+                </a>
+                <a href="https://play.google.com/store/apps/details?id=com.plantin.app">
+                  <img
+                    src="https://upload.wikimedia.org/wikipedia/commons/7/78/Google_Play_Store_badge_EN.svg"
+                    alt="Get it on Google Play"
+                    className="h-12"
+                  />
+                </a>
+              </div>
+            </div>
+
+            {/* Right side: Image */}
+            <div className="md:w-1/2">
+              <Image
+                src="https://myplantin.com/_next/image?url=https%3A%2F%2Fstrapi.myplantin.com%2FGroup_36915_dc91ac364d.webp&w=1200&q=75"
+                alt="Boost Plant Growth"
+                width={600}
+                height={400}
+                className="w-full h-auto object-cover rounded-lg"
+              />
             </div>
           </div>
 
-          {/* Right side: Image */}
-          <div className="md:w-1/2">
-            <Image
-              src="https://myplantin.com/_next/image?url=https%3A%2F%2Fstrapi.myplantin.com%2FGroup_36915_dc91ac364d.webp&w=1200&q=75"
-              alt="Boost Plant Growth"
-              width={600}
-              height={400}
-              className="w-full h-auto object-cover rounded-lg"
-            />
+          {/* Footer Info */}
+          <div className="mt-8 text-center">
+            <p className="text-sm text-gray-500">
+              Florinis 7, Greg Tower, 2nd Floor, 1065, Nicosia, Cyprus
+            </p>
+            <p className="text-sm text-gray-500">©2025 Planter. All rights reserved</p>
           </div>
         </div>
+      </section>
 
-        {/* Footer Info */}
-        <div className="mt-8 text-center">
-          <p className="text-sm text-gray-500">
-            Florinis 7, Greg Tower, 2nd Floor, 1065, Nicosia, Cyprus
-          </p>
-          <p className="text-sm text-gray-500">©2025 Elch. All rights reserved</p>
-        </div>
-      </div>
-    </section>
 
-      
     </main>
   );
 };

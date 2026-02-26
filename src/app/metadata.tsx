@@ -30,20 +30,20 @@ export const metadata: Metadata = {
     address: false,
     telephone: false,
   },
-  metadataBase: new URL('https://www.elch.live'),
+  metadataBase: new URL('https://www.Planter.live'),
   alternates: {
     canonical: '/',
   },
   openGraph: {
     type: 'website',
     locale: 'en_US',
-    url: 'https://www.elch.live',
+    url: 'https://www.Planter.live',
     title: 'Plant Identification & Plant Care - Identify, Diagnose & Grow Healthy Plants',
     description: 'Identify plants instantly with our advanced AI plant identifier. Get expert plant care advice, diagnose plant problems, and learn how to grow healthy plants.',
     siteName: 'PlantIn',
     images: [
       {
-        url: 'https://www.elch.live/android-chrome-512x512.png',
+        url: 'https://www.Planter.live/android-chrome-512x512.png',
         width: 512,
         height: 512,
         alt: 'PlantIn - Plant Identification & Care App',
@@ -54,7 +54,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'Plant Identification & Plant Care - Identify, Diagnose & Grow Healthy Plants',
     description: 'Identify plants instantly with our advanced AI plant identifier. Get expert plant care advice, diagnose plant problems, and learn how to grow healthy plants.',
-    images: ['https://www.elch.live/android-chrome-512x512.png'],
+    images: ['https://www.Planter.live/android-chrome-512x512.png'],
     creator: '@plantinapp',
   },
   robots: {

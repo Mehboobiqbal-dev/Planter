@@ -1,13 +1,13 @@
 import React from 'react';
 
-const ElchPromo: React.FC = () => {
+const PlanterPromo: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-900
  flex flex-col">
       {/* Header */}
       <header className="w-full bg-gray-900 border-b border-gray-200 py-4">
         <div className="max-w-6xl mx-auto px-4 flex justify-between items-center">
-          <div className="text-2xl font-bold text-gray-800">Elch</div>
+          <div className="text-2xl font-bold text-gray-800">Planter</div>
           <nav className="flex space-x-4">
             <a href="#" className="text-gray-600 hover:text-gray-800">Promo</a>
             <a href="#" className="text-gray-600 hover:text-gray-800">Feed</a>
@@ -21,7 +21,7 @@ const ElchPromo: React.FC = () => {
       <main className="max-w-3xl mx-auto px-4 py-8 text-center">
         {/* Promo Code Section */}
         <h1 className="text-3xl font-semibold text-gray-800 mb-4">
-          Use Your Elch Promo Code
+          Use Your Planter Promo Code
         </h1>
         <p className="text-lg text-gray-600 mb-6">
           To get exclusive access to the world's largest plant lovers community
@@ -44,7 +44,7 @@ const ElchPromo: React.FC = () => {
 
         {/* How It Works Section */}
         <h2 className="text-2xl font-semibold text-gray-800 mb-4">
-          How does the Elch promo code work?
+          How does the Planter promo code work?
         </h2>
         <p className="text-lg text-gray-600 mb-8">
           Enter your promo code and get full exclusive access for free
@@ -55,7 +55,7 @@ const ElchPromo: React.FC = () => {
           <div>
             <h3 className="text-xl font-medium text-gray-800">Accurate Plant Identifier</h3>
             <p className="text-gray-600">
-              Find out names for flowers, succulents, mushrooms, etc. instantly with Elch's ML-trained Identifier
+              Find out names for flowers, succulents, mushrooms, etc. instantly with Planter's ML-trained Identifier
             </p>
           </div>
           <div>
@@ -106,7 +106,7 @@ const ElchPromo: React.FC = () => {
       {/* Footer */}
       <footer className="w-full bg-white border-t border-gray-200 py-4">
         <div className="max-w-6xl mx-auto px-4 text-center">
-          <p className="text-gray-600">Elch. Copyright 2024</p>
+          <p className="text-gray-600">Planter. Copyright 2024</p>
           <a
             href="https://myplantin.com/promo"
             className="text-gray-600 hover:underline"
@@ -119,4 +119,4 @@ const ElchPromo: React.FC = () => {
   );
 };
 
-export default ElchPromo;
+export default PlanterPromo;

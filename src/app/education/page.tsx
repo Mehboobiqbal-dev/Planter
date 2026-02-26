@@ -1,12 +1,12 @@
 import React from 'react';
 
-const ElchEducation: React.FC = () => {
+const PlanterEducation: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-900 flex flex-col">
       {/* Header */}
       <header className="w-full bg-gray-900 py-4">
         <div className="max-w-6xl mx-auto px-4 flex justify-between items-center">
-          <div className="text-2xl font-bold text-white-800">Elch</div>
+          <div className="text-2xl font-bold text-white-800">Planter</div>
           <nav className="flex space-x-4">
             <a href="#" className="text-gray-600 hover:text-gray-800">Education</a>
             <a href="#" className="text-gray-600 hover:text-gray-800">Feed</a>
@@ -23,7 +23,7 @@ const ElchEducation: React.FC = () => {
 
         {/* Title */}
         <h1 className="text-3xl font-semibold text-white mb-4">
-          Elch for Educational organizations
+          Planter for Educational organizations
         </h1>
 
         {/* Form */}
@@ -43,10 +43,10 @@ const ElchEducation: React.FC = () => {
 
         {/* How to Use Section */}
         <h2 className="text-2xl font-semibold text-white mb-4">
-          How to use Elch for your edu goals?
+          How to use Planter for your edu goals?
         </h2>
         <p className="text-lg text-white mb-8">
-          Do you want to grow both plants and your own personal knowledge? Download Elch to get full access to all the tools and features needed for indoor and outdoor gardening.
+          Do you want to grow both plants and your own personal knowledge? Download Planter to get full access to all the tools and features needed for indoor and outdoor gardening.
         </p>
 
         {/* Features List */}
@@ -54,7 +54,7 @@ const ElchEducation: React.FC = () => {
           <div>
             <h3 className="text-xl font-medium text-white">Accurate Plant Identifier</h3>
             <p className="text-white">
-              Find out names for flowers, succulents, mushrooms, etc. instantly with Elch's ML-trained Identifier
+              Find out names for flowers, succulents, mushrooms, etc. instantly with Planter's ML-trained Identifier
             </p>
           </div>
           <div>
@@ -113,7 +113,7 @@ const ElchEducation: React.FC = () => {
             <span className="text-white">-</span>
             <a href="#" className="text-white hover:underline">Terms</a>
           </div>
-          <p className="text-white">Elch. Copyright 2024</p>
+          <p className="text-white">Planter. Copyright 2024</p>
           <a
             href="https://myplantin.com/education"
             className="text-white hover:underline"
@@ -127,4 +127,4 @@ const ElchEducation: React.FC = () => {
   );
 };
 
-export default ElchEducation;
+export default PlanterEducation;

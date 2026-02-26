@@ -106,7 +106,7 @@ function Footer() {
                 alt="PlantIn logo"
                 className="h-6 w-6 sm:h-8 sm:w-8"
               />
-              <span className="text-lg sm:text-xl font-bold">Elch</span>
+              <span className="text-lg sm:text-xl font-bold">Planter</span>
             </div>
             <p className="text-xs sm:text-sm leading-relaxed">
               Our plant identifier with database of more than 17,000 species is also the

@@ -10,36 +10,36 @@ interface Device {
 }
 
 const SubscriptionPage: React.FC = () => {
-    const [openFaq, setOpenFaq] = useState<number | null>(null);
-  
-    // FAQ data with questions and answers
-    const faqs = [
-      {
-        question: "What do I get with the trial subscription?",
-        answer: "You’ll have full access to all premium features for 3 days. The subscription includes limitless plant identification, disease diagnosis by photo, a watering calculator, and more!",
-      },
-      {
-        question: "How to update my subscription?",
-        answer: "Unless you cancel at least 24 hours before the end of the trial period, you will be automatically charged a price indicated on the payment screen for a chosen subscription period.",
-      },
-      {
-        question: "Does the subscription give access to the app?",
-        answer: "Basic and premium subscriptions are fully synced between the app and desktop, giving you access to all features on both platforms. Your accounts are linked, so the subscription stays in sync across devices.",
-      },
-      {
-        question: "Is the PlantIn app free?",
-        answer: "You can sign up for free and access features like identifying and caring for up to 3 plants, along with joining our Plant Heroes community. To unlock more plants and extra features, you'll need a premium plan.",
-      },
-      {
-        question: "What is the PlantIn Premium?",
-        answer: "PlantIn Premium is a subscription that gives you access to all features, including unlimited plant identification and disease diagnosis, treatment guides, plant care tools, weed articles, etc. All subscriptions are basically Premium.",
-      }
-    ];
-  
-    // Toggle FAQ open/close
-    const toggleFaq = (index: number) => {
-      setOpenFaq(openFaq === index ? null : index);
-    };
+  const [openFaq, setOpenFaq] = useState<number | null>(null);
+
+  // FAQ data with questions and answers
+  const faqs = [
+    {
+      question: "What do I get with the trial subscription?",
+      answer: "You’ll have full access to all premium features for 3 days. The subscription includes limitless plant identification, disease diagnosis by photo, a watering calculator, and more!",
+    },
+    {
+      question: "How to update my subscription?",
+      answer: "Unless you cancel at least 24 hours before the end of the trial period, you will be automatically charged a price indicated on the payment screen for a chosen subscription period.",
+    },
+    {
+      question: "Does the subscription give access to the app?",
+      answer: "Basic and premium subscriptions are fully synced between the app and desktop, giving you access to all features on both platforms. Your accounts are linked, so the subscription stays in sync across devices.",
+    },
+    {
+      question: "Is the PlantIn app free?",
+      answer: "You can sign up for free and access features like identifying and caring for up to 3 plants, along with joining our Plant Heroes community. To unlock more plants and extra features, you'll need a premium plan.",
+    },
+    {
+      question: "What is the PlantIn Premium?",
+      answer: "PlantIn Premium is a subscription that gives you access to all features, including unlimited plant identification and disease diagnosis, treatment guides, plant care tools, weed articles, etc. All subscriptions are basically Premium.",
+    }
+  ];
+
+  // Toggle FAQ open/close
+  const toggleFaq = (index: number) => {
+    setOpenFaq(openFaq === index ? null : index);
+  };
   const devices: Device[] = [
     {
       name: 'Desktop',
@@ -208,7 +208,7 @@ const SubscriptionPage: React.FC = () => {
                   <span className="h-5 w-5 text-white text-right mr-3">?</span>
                 </li>
                 <li className="flex items-center justify-between">
-                  <span className="text-gray-700">Moon Elchg Calendar</span>
+                  <span className="text-gray-700">Moon Planterg Calendar</span>
                   <span className="h-5 w-5 text-white text-right mr-3">?</span>
                 </li>
                 <li className="flex items-center justify-between">
@@ -255,17 +255,15 @@ const SubscriptionPage: React.FC = () => {
                   >
                     {/* Icon: change color based on active/inactive */}
                     <div
-                      className={`${
-                        isActive ? 'text-green-500' : 'text-gray-600'
-                      }`}
+                      className={`${isActive ? 'text-green-500' : 'text-gray-600'
+                        }`}
                     >
                       {dev.icon}
                     </div>
                     {/* Label: change color based on active/inactive */}
                     <p
-                      className={`mt-2 font-medium ${
-                        isActive ? 'text-green-500' : 'text-gray-700'
-                      }`}
+                      className={`mt-2 font-medium ${isActive ? 'text-green-500' : 'text-gray-700'
+                        }`}
                     >
                       {dev.name}
                     </p>
@@ -308,21 +306,21 @@ const SubscriptionPage: React.FC = () => {
         </section>
 
         {/* Money Back Guarantee */}
-      <div className="bg-blue-100 rounded-2xl p-4 flex flex-col md:flex-row items-center justify-between">
-  <div className="md:w-1/2 text-left">
-    <h2 className="text-lg font-bold text-gray-900">Money back guarantee</h2>
-    <p className="mt-2 text-gray-600 max-w-sm text-sm">
-      Your green friends will bloom and blossom, guaranteed. If things go wrong, we'll send your money back. We know they'll thrive though.
-    </p>
-  </div>
-  <div className="md:w-1/3 mt-3 md:mt-0 flex justify-center">
-    <img
-      src="https://myplantin.com/_next/image?url=https%3A%2F%2Fstrapi.myplantin.com%2Fsafety_1_6105fb8166.webp&w=640&q=75"
-      alt="Money back guarantee"
-      className="max-w-[75%] h-auto rounded-lg"
-    />
-  </div>
-</div>
+        <div className="bg-blue-100 rounded-2xl p-4 flex flex-col md:flex-row items-center justify-between">
+          <div className="md:w-1/2 text-left">
+            <h2 className="text-lg font-bold text-gray-900">Money back guarantee</h2>
+            <p className="mt-2 text-gray-600 max-w-sm text-sm">
+              Your green friends will bloom and blossom, guaranteed. If things go wrong, we'll send your money back. We know they'll thrive though.
+            </p>
+          </div>
+          <div className="md:w-1/3 mt-3 md:mt-0 flex justify-center">
+            <img
+              src="https://myplantin.com/_next/image?url=https%3A%2F%2Fstrapi.myplantin.com%2Fsafety_1_6105fb8166.webp&w=640&q=75"
+              alt="Money back guarantee"
+              className="max-w-[75%] h-auto rounded-lg"
+            />
+          </div>
+        </div>
       </div>
     </div>
   );
