@@ -72,8 +72,10 @@ export const metadata: Metadata = {
   },
   verification: {
     google: 'your-google-site-verification-code', // Replace with actual code
-    bing: 'your-bing-site-verification-code', // Replace with actual code
     yandex: 'your-yandex-verification-code', // Replace with actual code
+    other: {
+      'msvalidate.01': 'your-bing-site-verification-code', // Bing uses msvalidate.01 meta tag
+    },
   },
   category: 'gardening',
 }
