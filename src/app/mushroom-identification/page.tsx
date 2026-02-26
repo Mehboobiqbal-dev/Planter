@@ -7,7 +7,7 @@ const MushroomID = () => {
       <section className="flex flex-col md:flex-row items-center justify-center px-4 py-8 mx-auto max-w-[1320px] gap-8">
         <div className="flex-1 p-6">
           <h1 className="text-4xl font-bold mb-4 text-left">
-            Plantin Mushroom Identification App Feature
+            Elch Mushroom Identification App Feature
           </h1>
           <p className="text-lg mb-6 text-left">
             Want to go mushroom hunting but not sure which mushrooms you should pick? Don't worry! PlantIn has a mushroom identification app feature designed to make your shroom foraging trip safe and fun!

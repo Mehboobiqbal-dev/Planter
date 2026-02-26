@@ -208,7 +208,7 @@ const SubscriptionPage: React.FC = () => {
                   <span className="h-5 w-5 text-white text-right mr-3">?</span>
                 </li>
                 <li className="flex items-center justify-between">
-                  <span className="text-gray-700">Moon Planting Calendar</span>
+                  <span className="text-gray-700">Moon Elchg Calendar</span>
                   <span className="h-5 w-5 text-white text-right mr-3">?</span>
                 </li>
                 <li className="flex items-center justify-between">

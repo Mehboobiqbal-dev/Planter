@@ -264,11 +264,18 @@ export function NavigationHeader() {
           <div className="mx-auto max-w-7xl">
             <div className="flex items-center justify-between">
               {/* Logo */}
-              <div className="shrink-0">
-                <Link href="/" className="flex items-center h-12">
-                  <img src="https://myplantin.com/_next/static/media/logo.3707044a.svg" alt="Plant Care Logo" className="object-cover h-6 w-[108px] sm:h-8 sm:w-[144px]" />
-                </Link>
-              </div>
+           <div className="shrink-0 h-12 w-[108px] sm:w-[144px] overflow-hidden relative">
+  <Link href="/" className="flex items-center h-full">
+    <img
+      src="https://myplantin.com/_next/static/media/logo.3707044a.svg"
+      alt="Plant Care Logo"
+      className="h-full absolute top-0 left-0"
+      style={{ clipPath: 'inset(0 80% 0 0)' }} // Crop 70% from right
+    />
+  </Link>
+</div>
+
+
 
               {/* Mobile Top Navigation */}
               <div className="lg:hidden flex items-center gap-3 sm:gap-4">

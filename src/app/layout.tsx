@@ -1,14 +1,12 @@
-'use client';
-import { SessionProvider } from 'next-auth/react';
 import { Poppins } from 'next/font/google';
-import ReduxProvider from './redux/providers';
-import { usePathname } from 'next/navigation';
-import React from 'react';
+import { Metadata } from 'next';
+import { metadata as siteMetadata } from './metadata';
 
 import './globals.css';
 import { NavigationHeader } from './components/navigation/NavigationHeader';
 import StickyFooter from './components/StickyFooter';
 import Footer from './components/Footer';
+import ClientLayout from './components/ClientLayout';
 
 const poppins = Poppins({
   subsets: ['latin'],
@@ -16,24 +14,18 @@ const poppins = Poppins({
   variable: '--font-poppins',
 });
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
-  const pathname = usePathname();
-  const hideLayoutForAuth = pathname.startsWith('/authmodel');
+export const metadata: Metadata = siteMetadata;
 
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={poppins.variable}>
-      <head>
-        <link rel="icon" href="/favicon-32x32.png" />
-      </head>
       <body className="min-h-screen flex flex-col bg-white text-black" suppressHydrationWarning>
-        <ReduxProvider>
-          <SessionProvider refetchOnWindowFocus={false}>
-            {!hideLayoutForAuth && <NavigationHeader />}
-            <main className="flex-grow bg-white">{children}</main>
-            {!hideLayoutForAuth && <StickyFooter />}
-            {!hideLayoutForAuth && <Footer />}
-          </SessionProvider>
-        </ReduxProvider>
+        <ClientLayout>
+          <NavigationHeader />
+          <main className="flex-grow bg-white">{children}</main>
+          <StickyFooter />
+          <Footer />
+        </ClientLayout>
       </body>
     </html>
   );

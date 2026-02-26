@@ -297,7 +297,7 @@ const PlantIdentificationAppPage: React.FC = () => {
           <p className="text-sm text-gray-500">
             Florinis 7, Greg Tower, 2nd Floor, 1065, Nicosia, Cyprus
           </p>
-          <p className="text-sm text-gray-500">©2025 Plantin. All rights reserved</p>
+          <p className="text-sm text-gray-500">©2025 Elch. All rights reserved</p>
         </div>
       </div>
     </section>

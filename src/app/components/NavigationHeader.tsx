@@ -299,7 +299,7 @@ export function NavigationHeader() {
               {/* Desktop Navigation */}
               <nav className="hidden lg:flex items-center gap-6">
                 <div className="relative group">
-                  <Link href="/identify" className="px-4 py-2 font-medium text-neutral-800 flex items-center hover:text-teal-600">
+                  <Link href="/identify" className="px-4 py-2 font-medium bg-white text-neutral-800 flex items-center hover:text-teal-600">
                     Plant Identifier
                     <svg className="h-4 w-4 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
                   </Link>
